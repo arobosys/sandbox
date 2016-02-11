@@ -1,18 +1,15 @@
 #include <map>
 #include <unordered_map>
 #include "GoalSender.hpp"
+//#include <malish/Lift.h>
+// #include </home/zhuhua/AGRO/catkin_ws/src/malish/devel/include/malish/Lift.h>
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
-
-    //MoveBaseClient ac("move_base", true);
-
+    num_goal = 7;
+    //pub_lift = handle.advertise<Malish::Lift>("/lift", 10);
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
-                                                                     std::bind(&GoalSender::goalCallback, this,
-                                                                               std::placeholders::_1),
-                                                                     std::bind(&GoalSender::preemtCallback,
-                                                                               this));
-
-    ROS_INFO("goal_sender_callback  is set");
+                       std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
+                       std::bind(&GoalSender::preemtCallback,this));
 
     rosLinkClientPtr->listen();
 }
@@ -37,6 +34,9 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
     std::string goal2_string = keyToValue.at(GOAL2);
     std::string goal3_string = keyToValue.at(GOAL3);
     std::string goal4_string = keyToValue.at(GOAL4);
+    std::string goal5_string = keyToValue.at(GOAL5);
+    std::string goal6_string = keyToValue.at(GOAL6);
+    std::string goal7_string = keyToValue.at(GOAL7);
 
     double goalToMove[num_goal][3];
 
@@ -45,25 +45,52 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
     goalToMove[0][0]=goal[0];
     goalToMove[0][1]=goal[1];
     goalToMove[0][2]=goal[2];
-    //goal1=goalTransform(goal[1],goal[2],goal[3]);
+
     goal = splitByDelimiter<double>(goal2_string, ';');
     ROS_INFO("From logic layer I get 2d_goal2: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[1][0]=goal[0];
     goalToMove[1][1]=goal[1];
     goalToMove[1][2]=goal[2];
-    //goal2=goalTransform(goal[1],goal[2],goal[3]);
+
     goal = splitByDelimiter<double>(goal3_string, ';');
     ROS_INFO("From logic layer I get 2d_goal3: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[2][0]=goal[0];
     goalToMove[2][1]=goal[1];
     goalToMove[2][2]=goal[2];
-    //goal3=goalTransform(goal[1],goal[2],goal[3]);
+
     goal = splitByDelimiter<double>(goal4_string, ';');
     ROS_INFO("From logic layer I get 2d_goal4: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[3][0]=goal[0];
     goalToMove[3][1]=goal[1];
     goalToMove[3][2]=goal[2];
-    //goal4=goalTransform(goal[1],goal[2],goal[3]);
+
+    goal = splitByDelimiter<double>(goal5_string, ';');
+    ROS_INFO("From logic layer I get 2d_goal5: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
+    goalToMove[4][0]=goal[0];
+    goalToMove[4][1]=goal[1];
+    goalToMove[4][2]=goal[2];
+
+    goal = splitByDelimiter<double>(goal6_string, ';');
+    ROS_INFO("From logic layer I get 2d_goal6: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
+    goalToMove[5][0]=goal[0];
+    goalToMove[5][1]=goal[1];
+    goalToMove[5][2]=goal[2];
+
+    goal = splitByDelimiter<double>(goal7_string, ';');
+    ROS_INFO("From logic layer I get 2d_goal7: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
+    goalToMove[6][0]=goal[0];
+    goalToMove[6][1]=goal[1];
+    goalToMove[6][2]=goal[2];
+
+    /*
+    malish::Lift lift_msg;
+    lift_msg.dio1 = True;
+    lift_msg.dio2 = False;
+    lift_msg.dio3 = False;
+    pub_lift.publish(lift_msg);
+     */
+    ROS_INFO("I am lifting load");
+    ros::Duration(3).sleep();
 
     //tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
@@ -97,62 +124,30 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
         ac.waitForResult();
 
         if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-            ROS_INFO("Malish, the robot moved to goal %d", i+1);
+        {
+            ROS_INFO("Malish, the robot moved to goal %d", i + 1);
+            if(i==3)
+            {
+                /*
+                malish::Lift lift_msg;
+                lift_msg.dio1 = False;
+                lift_msg.dio2 = True;
+                lift_msg.dio3 = True;
+                pub_lift.publish(lift_msg);
+                 */
+                ROS_INFO("I am unloading");
+                ros::Duration(3).sleep();
+            }
+
+        }
         else
             ROS_INFO("The robot failed to move to goal %d for some reason", i+1);
     }
 
 }
-/*
-move_base_msgs::MoveBaseGoal goalTransform(double x,double y,double theta)
+
+void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &params)
 {
-    move_base_msgs::MoveBaseGoal goal;
-
-    goal.target_pose.header.frame_id = "map";
-    goal.target_pose.header.stamp = ros::Time::now();
-
-    goal.target_pose.pose.position.x = x;
-    goal.target_pose.pose.position.y = y;
-
-    double radians=theta*(3.1415916/180);
-    tf::Quaternion quaternion;
-    quaternion = tf::createQuaternionFromYaw(radians);
-    geometry_msgs::Quaternion qMsg;
-    tf::quaternionTFToMsg(quaternion,qMsg);
-    goal.target_pose.pose.orientation= qMsg;
-
-    return goal;
-}
-
-bool publishGoal(move_base_msgs::MoveBaseGoal goal)
-{
-    MoveBaseClient ac("move_base", true);
-    //wait for the action server to come up
-    while(!ac.waitForServer(ros::Duration(10.0))){
-        ROS_INFO("Waiting for the move_base action server to come up");
-    }
-
-
-    ROS_INFO("Sending goal");
-    ac.sendGoal(goal);
-
-    ac.waitForResult();
-
-    if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_INFO("Malish, the robot moved to goal");
-        return true;
-    }
-    else
-    {
-        ROS_INFO("The robot failed to move to goal for some reason");
-        return false;
-    }
-}
- */
-
-void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &params) {
-    ROS_INFO("goal_sender_node is working");
     auto data = params.key_value;
     std::map<std::string, std::string> keyToValue;
     for (const auto &a : data) {
@@ -161,12 +156,6 @@ void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &par
     num_goal = std::stod(keyToValue[NUM_GOAL]);
     ROS_INFO("The number of goal = %d", num_goal);
     parseTransforms(keyToValue);
-/*
-    publishGoal(goal1);
-    publishGoal(goal2);
-    publishGoal(goal3);
-    publishGoal(goal4);
-*/
 }
 
 void GoalSender::preemtCallback() {}

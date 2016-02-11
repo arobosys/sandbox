@@ -10,20 +10,19 @@
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 class GoalSender {
+  //  ros::Publisher pub_lift;
 
     const std::string NUM_GOAL = "num_goal";
     const std::string GOAL1 = "2d_goal1";
     const std::string GOAL2 = "2d_goal2";
     const std::string GOAL3 = "2d_goal3";
     const std::string GOAL4 = "2d_goal4";
+    const std::string GOAL5 = "2d_goal5";
+    const std::string GOAL6 = "2d_goal6";
+    const std::string GOAL7 = "2d_goal7";
 
-    int num_goal=4;
+    int num_goal;
 
-    //move_base_msgs::MoveBaseGoal goal1,goal2,goal3,goal4;
-
-    //typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
-
-    //MoveBaseClient ac;
 
     std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
 
@@ -32,11 +31,6 @@ class GoalSender {
     void preemtCallback();
 
     void parseTransforms(const std::map<std::string, std::string> &keyToValue);
-
-
-    //void goalTransform(double x,double y,double theta,);
-
-    //bool publishGoal(move_base_msgs::MoveBaseGoal goal);
 
 
 public:

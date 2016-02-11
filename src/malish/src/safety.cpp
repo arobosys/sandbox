@@ -36,7 +36,7 @@ static const float robot_width = 0.45;
 /// Robot's length, meters.
 static const float robot_length = 0.65;
 /// Margin of safety vicinity, meters.
-static const float margin = 1.25;
+static const float margin = 0.88;
 /// Minimal blob area to consider it as obstacle, [pixels].
 static const float min_blob_area = 2.0;
 /// Constant for comparision with float type zero value.
@@ -290,9 +290,9 @@ class Safety {
           safety_msg_.pos.position.y = (center_blob.y - robo_y) * map_info.resolution;
           safety_msg_.pos.position.z = 0.0;
           // LED strip lightening.
-          led_msg_.red = 127;
-          led_msg_.green = 127;
-          led_msg_.blue = 127;
+          led_msg_.red = 255;
+          led_msg_.green = 0;
+          led_msg_.blue = 0;
       }
       else if(safety_msg_.alert == true) {
           // Reset message.
