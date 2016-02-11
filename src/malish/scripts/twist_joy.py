@@ -2,7 +2,7 @@
 # license removed for brevity
 import rospy
 from std_msgs.msg import String
-from malish.msg import NewTwist, Diode, Obstacle, Lift
+from malish.msg import NewTwist, Diode, Obstacle, Lift, JoyCMD
 from sensor_msgs.msg import Joy
 from math import atan2,pi,sqrt
 from geometry_msgs.msg import Twist
@@ -34,9 +34,11 @@ flag_no_cmd = False;
 
 lift = False;
 alert = False;
+gogogo_prev = False;
+restart_prev = False;
 
 def callback(data):
-    global pub, t1, flag_no_cmd, pub_lift
+    global pub, t1, flag_no_cmd, pub_lift, gogogo_prev, restart_prev
 
     #Dead zone constant
     thresh = 0.15
@@ -52,6 +54,26 @@ def callback(data):
     throttle = data.buttons[0]
     lifter = data.buttons[4]
     unlifter = data.buttons[5]
+    gogogo = data.buttons[1]
+    restart = data.buttons[2]
+    joy_cmd = JoyCMD()
+
+    if (gogogo==1):
+    	joy_cmd.gogogo = True
+    else:
+    	joy_cmd.gogogo = False
+
+    if (restart==1):
+    	joy_cmd.restart = True
+    else:
+    	joy_cmd.restart = False
+    
+    #pub.publish(joy cmd)
+    if (gogogo!=gogogo_prev) or(restart!=restart_prev):
+    	pub_command.publish(joy_cmd)
+
+    gogogo_prev = bool(gogogo)
+    restart_prev = bool(restart) 
 
     flag_no_cmd = bool(data.buttons[3])
 
@@ -100,10 +122,11 @@ def safety_callback(msg):
     alert = msg.alert
 
 def talker():
-    global pub, t1, t2, flag_no_cmd, pub_lift, alert
+    global pub, t1, t2, flag_no_cmd, pub_lift, alert, pub_command
     rospy.init_node('twist_joy')
     pub = rospy.Publisher('/twist/command', NewTwist, queue_size=10)
     pub_lift = rospy.Publisher('/lift', Lift , queue_size=10)
+    pub_command = rospy.Publisher('/joy/command', JoyCMD , queue_size=10)
 
     rospy.Subscriber("/joy", Joy, callback)
     rospy.Subscriber("/cmd_vel", Twist, vel_callback)
