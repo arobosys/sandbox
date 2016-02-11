@@ -23,14 +23,14 @@
 
         <param name="Grid/NormalsSegmentation" value="true"/>
         <param name="Grid/FromDepth" value="true"/>
-        <param name="Grid/DepthMax" value="10.0"/>
+        <param name="Grid/DepthMax" value="5.0"/>
         <param name="Rtabmap/DetectionRate" value="15"/>
         <param name="SURF/GpuVersion" value="true"/>
         <param name="Reg/Force3DoF" value="true"/>
         <param name="Grid/3D" value="false"/>
         <param name="Grid/MaxObstacleHeight" value="0.20"/>
-        <param name="Grid/MinGroundHeight" value="-3.0"/>
-        <param name="Grid/MaxGroundHeight" value="0.1"/>
+        <param name="Grid/MinGroundHeight" value="-0.35"/>
+        <param name="Grid/MaxGroundHeight" value="0.10"/>
         <param name="Grid/MaxGroundAngle" value="45"/>
 
         <remap from="rgb/image"       to="/zed/rgb/image_rect_color"/>
@@ -97,30 +97,22 @@
         <param name="publish_tf" value="true"/>
 
         <param name="odom0" value="/zed/odom"/>
-        <rosparam param="odom0_config">[true, true, true,
-                                        true, true, true,
-                                        false,  false, false,
+	<param name="odom0_differential" value="true"/>
+        <rosparam param="odom0_config">[false, false, true,
+                                        false, false, false,
+                                        true,  true,  false,
                                         false, false, false,
                                         false, false, false]</rosparam>
 					
         <param name="odom1" value="/omni/odom"/>
-        <rosparam param="odom1_config">[false, false, false,
+        <rosparam param="odom1_config">[true, true, false,
                                         false, false, true,
                                         true,  true, false,
                                         false, false, true,
                                         false, false, false]</rosparam>
-
-        <param name="imu0" value="/imu/transform"/>
-        <rosparam param="imu0_config">[false, false, false,
-                                       false, false, false,
-                                       false, false, false,
-                                       true, true, true,
-                                       true, true, true]</rosparam>
-        <param name="imu0_remove_gravitational_acceleration" value="true"/>
-        <param name="imu0_threshold" value="100"/>
     </node>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_camera_link" args="0.28 0 0.35 0 0 0 base_link camera_link 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_camera_link" args="0.28 0 0.27 0 0 0 base_link camera_link 20"/>
     <node pkg="tf" type="static_transform_publisher" name="camera_link_zed_center" args="0 0 0 0 0 0 camera_link zed_center 20"/>
     <node pkg="tf" type="static_transform_publisher" name="base_link_imu" args="0 0 0 0 0 3.14 base_link imu 20"/>
     <node pkg="tf" type="static_transform_publisher" name="bl_sonar_left" args="0 0.15 0.16 1.57 0 0 base_link sonar_left 20"/>
