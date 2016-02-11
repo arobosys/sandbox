@@ -35,9 +35,9 @@ public:
         //TODO:'"move param to constructor setable"
         //Robot parametres
         //Robot is symmetric, dimention in metres
-        rwheel = 0.07;
-        lx = 0.2;
-        ly = 0.3;
+        rwheel = 0.05;
+        lx = 0.245;
+        ly = 0.1925;
         time_not_init = true;
 
         if (nh_.getParam("rwheel", rwheel))
