@@ -3,34 +3,26 @@
  * \file safety.cpp
  *
  * Node which informs you if obstacles invade robot's safety vicinity.
+ * Works with sonars only.
  *
  * \authors Ostroumov Georgy
  * \authors Shtanov Evgeny
  *
 */
 
-#include <sstream>
 #include <list>
+#include <mutex>
 // ROS
 #include "ros/ros.h"
 #include <ros/console.h>
 #include "std_msgs/String.h"
-#include <nav_msgs/OccupancyGrid.h>
-#include <nav_msgs/Odometry.h>
-#include <tf/transform_datatypes.h>
 #include <geometry_msgs/Pose.h>
-#include <tf/transform_listener.h>
-#include <costmap_2d/costmap_2d_ros.h>
 #include <malish/Obstacle.h>
 #include <malish/Diode.h>
-#include <malish/JoyCMD.h>
 #include <sensor_msgs/Range.h>
 
-// OpenCV
-#include <opencv2/imgproc.hpp>
-#include "opencv2/opencv.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include <opencv2/core/core.hpp>
+
+typedef std::lock_guard<std::mutex> std_lock;
 
 // #define __DEBUG__ 1
 const static int __DEBUG__ = 0;
@@ -41,26 +33,14 @@ static const float robot_width = 0.45;
 static const float robot_length = 0.65;
 /// Maximal sonar distance, [m].
 static const float sonar_max_phisical = 1.03;
-static const float sonar_max = 1.0;
+static const float sonar_max_bckg = 1.0;
 static const float sonar_max_front = 1.0;
-static const float sonar_alert_front = 0.75;
+static const float sonar_alert_front = 0.55;
 static const float sonar_alert_bckg = 0.15;
 /// Constant for comparision with float type zero value.
 static const float eps = 1e-10;
 /// Queue to suppress noise in sonars range measurement.
 static const unsigned int queue_size = 10;
-
-static const unsigned char RESET = 0;
-static const unsigned char FRONT_YELLOW = 1;
-static const unsigned char FRONT_RED = 2;
-static const unsigned char RIGHT_YELLOW = 4;
-static const unsigned char RIGHT_RED = 8;
-static const unsigned char REAR_YELLOW = 16;
-static const unsigned char REAR_RED = 32;
-static const unsigned char LEFT_YELLOW = 64;
-static const unsigned char LEFT_RED = 128;
-static const unsigned char ANY_YELLOW = 85;
-static const unsigned char ANY_RED = 170;
 
 enum LED_state {
   NONE = 0,
@@ -68,68 +48,6 @@ enum LED_state {
   YELLOW = 2,
   RED = 3
 };
-
-/* Standard operations with bitmaksk. */
-unsigned char ToggleNthBit(unsigned char num, unsigned char n) {
-  if(num & (1 << n))
-    num &= ~(1 << n);
-  else
-    num |= (1 << n);
-
-  return num;
-}
-
-unsigned char set_nth_bit(unsigned char num, unsigned char n) {
-
-    return (num | 1 << n);
-}
-
-unsigned char clear_nth_bit(unsigned char num, unsigned char n) {
-
-    return (num & ~( 1 << n));
-}
-
-unsigned char toggle_nth_bit(unsigned char num, unsigned char n) {
-
-    return num ^ (1 << n);
-}
-
-unsigned char check_nth_bit(unsigned char num, unsigned char n) {
-
-    return num & (1 << n);
-}
-
-
-bool check_mask(unsigned int const& mask, unsigned char flag) {
-  unsigned int check_mask = 0;
-  check_mask = mask & flag;
-
-  return check_mask > 0 ? true : false;
-}
-
-void set_mask(unsigned char *mask, unsigned char flag) {
-  *mask |= flag;
-}
-
-void reset_front(unsigned char *mask) {
-  *mask = clear_nth_bit(*mask, 1);
-  *mask = clear_nth_bit(*mask, 0);
-}
-
-void reset_right(unsigned char *mask) {
-  *mask = clear_nth_bit(*mask, 3);
-  *mask = clear_nth_bit(*mask, 2);
-}
-
-void reset_rear(unsigned char *mask) {
-  *mask = clear_nth_bit(*mask, 5);
-  *mask = clear_nth_bit(*mask, 4);
-}
-
-void reset_left(unsigned char *mask) {
-  *mask = clear_nth_bit(*mask, 7);
-  *mask = clear_nth_bit(*mask, 6);
-}
 
 void set_red_LED(malish::Diode & msg) {
   msg.red = 255;
@@ -194,7 +112,6 @@ class Safety {
       rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rearSonarCallback, this);
       left_sonar_sub_ = nh_.subscribe("/sonar/left", 10, &Safety::leftSonarCallback, this);
       right_sonar_sub_ = nh_.subscribe("/sonar/right", 10, &Safety::rightSonarCallback, this);
-      safety_toggle_sub_ = nh_.subscribe("/malish/safety_toggle", 10, &Safety::safetyToggleCallback, this);
 
       // Init messages.
       safety_msg_.timestamp = ros::Time::now();
@@ -213,231 +130,123 @@ class Safety {
       led_msg_.green = 0;
       led_msg_.blue = 0;
 
-      suspend_node = false;
-      sonar_alarm = false;
-      sonar_yellow = false;
-      mask = 0; // 0000 0000
-      // 00 - white blink;
-      // 01 - yellow blink;
-      // 10 or 11 - reb blink
+      min_dist_bckg_ = sonar_max_bckg;
+    }
+
+    void state_processor() {
+      // Get minimal distance from rear and side sonars.
+      std_lock lock(Mutex_bckg_sons_);
+      float min_bckg = min_dist_bckg_;
+
+      if(dist_front_ < sonar_alert_front || min_bckg < sonar_alert_bckg) {
+        state_ = RED;
+      }
+      else if (dist_front_ < sonar_max_front || min_bckg < sonar_max_bckg) {
+        state_ = YELLOW;
+      }
+      else {
+        state_ = WHITE;
+      }
+      // Reinitialize min_dist_bckg_
+      // std_lock lock(Mutex_bckg_sons_);
+      min_dist_bckg_ = sonar_max_bckg;
     }
 
     void message_sender() {
       static unsigned char prev_state = NONE;
-      if (state != prev_state && !suspend_node) {
+
+      if (state_ != prev_state) {
         safety_msg_.timestamp = ros::Time::now();
-        if(check_mask(mask, ANY_RED)) {
-          safety_msg_.alert = true;
-          set_red_LED(led_msg_);
-          safety_pub_.publish(safety_msg_);
-          led_pub_.publish(led_msg_);
-        } else if(check_mask(mask, ANY_YELLOW)) {
-          safety_msg_.alert = false;
-          set_yellow_LED(led_msg_);
-          safety_pub_.publish(safety_msg_);
-          led_pub_.publish(led_msg_);
-        } else {
-          safety_msg_.alert = false;
-          reset_LED(led_msg_);
-          safety_pub_.publish(safety_msg_);
-          led_pub_.publish(led_msg_);
+
+        switch(state_) {
+          case RED:
+            safety_msg_.alert = true;
+            set_red_LED(led_msg_);
+            safety_pub_.publish(safety_msg_);
+            led_pub_.publish(led_msg_);
+            break;
+          case YELLOW:
+            safety_msg_.alert = false;
+            set_yellow_LED(led_msg_);
+            safety_pub_.publish(safety_msg_);
+            led_pub_.publish(led_msg_);
+            break;
+          case WHITE:
+            safety_msg_.alert = false;
+            reset_LED(led_msg_);
+            safety_pub_.publish(safety_msg_);
+            led_pub_.publish(led_msg_);
+            break;
+          default:
+            safety_msg_.alert = false;
+            reset_LED(led_msg_);
         }
       }
-    }
 
-    void safetyToggleCallback(malish::JoyCMD const& joy_msg) {
-      static bool toggle = false;
-      if(joy_msg.safety_toggle) {
-    	if(!toggle) {
-          suspend_node = true;
-    	} else {
-    	  suspend_node = false;
-    	}
-      }
+      prev_state = state_;
     }
 
     void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
       static std::list<float> range_list;
 
-      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max_bckg, queue_size);
 
       ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-      if (mean > sonar_alert_front && mean < sonar_max_front) {
-        // Set color
-        set_yellow_LED(led_msg_);
-        // Set mask
-        set_mask(&mask, FRONT_YELLOW);
-        // Set state
-        state = RED;
-        // Send mesage
-        message_sender();
-      } else if(mean < sonar_alert_front) {
-        // Set color
-        set_red_LED(led_msg_);
+      dist_front_ = mean;
 
-        // Set mask
-        set_mask(&mask, FRONT_RED);
-
-        // Set state
-        if (!check_mask(mask, ANY_RED)) {
-          state = YELLOW;
-        }
-        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
-
-        // Send mesage
-        message_sender();
-      } else {
-        // Set state
-        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
-          state = WHITE;
-        }
-
-        // Reset mask
-        reset_front(&mask);
-
-        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
-        // Send message
-        message_sender();
-      }
+      // Publish safety message with front sonar's rate.
+      state_processor();
+      message_sender();
     }
+
+    /*void do_range(std::list<float> & queue, float range, float def_range, unsigned int size=5) {
+      float mean = push_and_mean_list(queue, range, def_range, queue_size);
+
+      ROS_INFO_COND(__DEBUG__ > 0, "rear sonar mean range %f", mean);
+
+      if(mean < min_dist_bckg_) {
+        std_lock lock(Mutex_bckg_sons_);
+        min_dist_bckg_ = mean;
+      }
+    }*/
 
     void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
       static std::list<float> range_list;
 
-      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max_bckg, queue_size);
 
-      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+      ROS_INFO_COND(__DEBUG__ > 0, "rear sonar mean range %f", mean);
 
-      if (mean > sonar_alert_bckg && mean < sonar_max) {
-        // Set color
-        set_yellow_LED(led_msg_);
-        // Set mask
-        set_mask(&mask, REAR_YELLOW);
-        // Set state
-        state = RED;
-        // Send mesage
-        message_sender();
-      } else if(mean < sonar_alert_bckg) {
-        // Set color
-        set_red_LED(led_msg_);
-
-        // Set mask
-        set_mask(&mask, REAR_RED);
-
-        // Set state
-        if (!check_mask(mask, ANY_RED)) {
-          state = YELLOW;
-        }
-        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
-
-        // Send mesage
-        message_sender();
-      } else {
-        // Set state
-        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
-          state = WHITE;
-        }
-
-        // Reset mask
-        reset_rear(&mask);
-
-        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
-        // Send message
-        message_sender();
+      if(mean < min_dist_bckg_) {
+        std_lock lock(Mutex_bckg_sons_);
+        min_dist_bckg_ = mean;
       }
     }
 
     void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
       static std::list<float> range_list;
 
-      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max_bckg, queue_size);
 
-      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+      ROS_INFO_COND(__DEBUG__ > 0, "right sonar mean range %f", mean);
 
-      if (mean > sonar_alert_bckg && mean < sonar_max) {
-        // Set color
-        set_yellow_LED(led_msg_);
-        // Set mask
-        set_mask(&mask, RIGHT_YELLOW);
-        // Set state
-        state = RED;
-        // Send mesage
-        message_sender();
-      } else if(mean < sonar_alert_bckg) {
-        // Set color
-        set_red_LED(led_msg_);
-
-        // Set mask
-        set_mask(&mask, RIGHT_RED);
-
-        // Set state
-        if (!check_mask(mask, ANY_RED)) {
-          state = YELLOW;
-        }
-        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
-
-        // Send mesage
-        message_sender();
-      } else {
-        // Set state
-        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
-          state = WHITE;
-        }
-
-        // Reset mask
-        reset_right(&mask);
-
-        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
-        // Send message
-        message_sender();
+      if(mean < min_dist_bckg_) {
+        std_lock lock(Mutex_bckg_sons_);
+        min_dist_bckg_ = mean;
       }
     }
 
     void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
       static std::list<float> range_list;
 
-      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max_bckg, queue_size);
 
-      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+      ROS_INFO_COND(__DEBUG__ > 0, "left sonar mean range %f", mean);
 
-      if (mean > sonar_alert_bckg && mean < sonar_max) {
-        // Set color
-        set_yellow_LED(led_msg_);
-        // Set mask
-        set_mask(&mask, LEFT_YELLOW);
-        // Set state
-        state = RED;
-        // Send mesage
-        message_sender();
-      } else if(mean < sonar_alert_bckg) {
-        // Set color
-        set_red_LED(led_msg_);
-
-        // Set mask
-        set_mask(&mask, LEFT_RED);
-
-        // Set state
-        if (!check_mask(mask, ANY_RED)) {
-          state = YELLOW;
-        }
-        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
-
-        // Send mesage
-        message_sender();
-      } else {
-        // Set state
-        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
-          state = WHITE;
-        }
-
-        // Reset mask
-        reset_left(&mask);
-
-        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
-
-        // Send message
-        message_sender();
+      if(mean < min_dist_bckg_) {
+        std_lock lock(Mutex_bckg_sons_);
+        min_dist_bckg_ = mean;
       }
     }
 
@@ -448,24 +257,105 @@ class Safety {
     ros::Subscriber rear_sonar_sub_;
     ros::Subscriber left_sonar_sub_;
     ros::Subscriber right_sonar_sub_;
-    ros::Subscriber safety_toggle_sub_;
 
     malish::Obstacle safety_msg_;
     malish::Diode led_msg_;
-    bool sonar_alarm;
-    bool sonar_yellow;
-    unsigned char mask;
-    unsigned char state;
-    bool suspend_node;
+    unsigned char state_;
+    // Current distance taken from front sonar.
+    float dist_front_;
+    // Minimal current distance from the rest sonars.
+    float min_dist_bckg_;
+    // Mutex for min_dist_bckg.
+    std::mutex Mutex_bckg_sons_;
 };
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "safety_node");
 
-  ROS_INFO("Hello, ROS!");
+  ROS_INFO_COND(__DEBUG__ > 0, "Hello, ROS!");
 
   Safety safety_checker;
 
   ros::spin();
 }
+
+// mask_ = 0; // 0000 0000
+// 00 - white blink;
+// 01 - yellow blink;
+// 10 or 11 - reb blink
+
+/*static const unsigned char RESET = 0;
+static const unsigned char FRONT_YELLOW = 1;
+static const unsigned char FRONT_RED = 2;
+static const unsigned char RIGHT_YELLOW = 4;
+static const unsigned char RIGHT_RED = 8;
+static const unsigned char REAR_YELLOW = 16;
+static const unsigned char REAR_RED = 32;
+static const unsigned char LEFT_YELLOW = 64;
+static const unsigned char LEFT_RED = 128;
+static const unsigned char ANY_YELLOW = 85;
+static const unsigned char ANY_RED = 170;*/
+
+/* Standard operations with bitmaksk. */
+/*unsigned char ToggleNthBit(unsigned char num, unsigned char n) {
+  if(num & (1 << n))
+    num &= ~(1 << n);
+  else
+    num |= (1 << n);
+
+  return num;
+}
+
+unsigned char set_nth_bit(unsigned char num, unsigned char n) {
+
+    return (num | 1 << n);
+}
+
+unsigned char clear_nth_bit(unsigned char num, unsigned char n) {
+
+    return (num & ~( 1 << n));
+}
+
+unsigned char toggle_nth_bit(unsigned char num, unsigned char n) {
+
+    return num ^ (1 << n);
+}
+
+unsigned char check_nth_bit(unsigned char num, unsigned char n) {
+
+    return num & (1 << n);
+}
+
+
+bool check_mask(unsigned int const& mask, unsigned char flag) {
+  unsigned int check_mask = 0;
+  check_mask = mask & flag;
+
+  return check_mask > 0 ? true : false;
+}
+
+void set_mask(unsigned char *mask, unsigned char flag) {
+  *mask |= flag;
+}
+
+void reset_front(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 1);
+  *mask = clear_nth_bit(*mask, 0);
+}
+
+void reset_right(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 3);
+  *mask = clear_nth_bit(*mask, 2);
+}
+
+void reset_rear(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 5);
+  *mask = clear_nth_bit(*mask, 4);
+}
+
+void reset_left(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 7);
+  *mask = clear_nth_bit(*mask, 6);
+} */
+

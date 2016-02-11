@@ -1,2 +1,2 @@
-bool safety_toggle
+bool gogogo
 bool restart

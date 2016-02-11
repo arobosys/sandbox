@@ -1,3 +1,4 @@
+
 <launch>
   <node pkg="joy" type="joy_node" name="joy_node">
   </node>
@@ -15,8 +16,8 @@
                                   0.0, 0.0, 0.0, 0.0, 1000000.0, 0.0,
                                   0.0, 0.0, 0.0, 0.0, 0.0, 0.03]</rosparam>
   </node>
-  <node pkg="malish" name="safety" type="safety" >
-  </node>
+  <!--<node pkg="malish" name="safety" type="safety" >
+  </node>-->
 
 
 
