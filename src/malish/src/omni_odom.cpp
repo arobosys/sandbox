@@ -10,6 +10,7 @@
 #include "XmlRpcException.h"
 
 //#define __OMNI_ODOM_DEBUG
+//#define __ODOM_BROADCASTER
 
 const int COV_SIZE = 36;
 
@@ -140,11 +141,11 @@ public:
         //next, we'll publish the odometry message over ROS
         nav_msgs::Odometry odom;
         odom.header.stamp = current_time;
-#ifdef __ODOM_BROADCASTER
+//#ifdef __ODOM_BROADCASTER
         odom.header.frame_id = "odom";
-#else
-        odom.header.frame_id = "map";
-#endif
+//#else
+//        odom.header.frame_id = "map";
+//#endif
 
         //set the position
         odom.pose.pose.position.x = x;
@@ -161,11 +162,11 @@ public:
 
 
         //set the velocity
-#ifdef __ODOM_BROADCASTER
+//#ifdef __ODOM_BROADCASTER
         odom.child_frame_id = "base_link";
-#else
-        odom.child_frame_id = "omni_odom";
-#endif
+//#else
+//        odom.child_frame_id = "omni_odom";
+//#endif
         odom.twist.twist.linear.x = vx;
         odom.twist.twist.linear.y = vy;
         odom.twist.twist.angular.z = vth;
