@@ -25,6 +25,7 @@ add_message_files(
   ArduImu.msg
   Obstacle.msg
   Lift.msg
+  JoyCMD.msg	
 )
 generate_messages(
   DEPENDENCIES
