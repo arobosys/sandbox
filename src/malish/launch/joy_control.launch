@@ -8,6 +8,12 @@
   <node pkg="malish" name="sonar_transform" type="sonar_transform" >
   </node>
   <node pkg="malish" name="omni_odom" type="omni_odom" >
+    <rosparam param="covariance">[0.001, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                  0.0, 0.001, 0.0, 0.0, 0.0, 0.0,
+                                  0.0, 0.0, 1000000.0, 0.0, 0.0, 0.0,
+                                  0.0, 0.0, 0.0, 1000000.0, 0.0, 0.0,
+                                  0.0, 0.0, 0.0, 0.0, 1000000.0, 0.0,
+                                  0.0, 0.0, 0.0, 0.0, 0.0, 0.03]</rosparam>
   </node>
   <node pkg="malish" name="safety" type="safety" >
   </node>

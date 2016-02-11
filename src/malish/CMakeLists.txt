@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   message_generation
+  xmlrpcpp
 )
 #add_service_files(
 #  FILES
@@ -24,6 +25,7 @@ add_message_files(
   ArduImu.msg
   Obstacle.msg
   Lift.msg
+  JoyCMD.msg	
 )
 generate_messages(
   DEPENDENCIES
@@ -31,7 +33,7 @@ generate_messages(
   std_msgs
 )
 catkin_package(
-  CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS message_runtime xmlrpcpp
 )
 include_directories(
   ${catkin_INCLUDE_DIRS}

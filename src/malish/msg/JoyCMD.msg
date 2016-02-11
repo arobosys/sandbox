@@ -1,0 +1,2 @@
+bool gogogo
+bool restart

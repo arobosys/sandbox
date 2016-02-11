@@ -18,14 +18,14 @@ catkin_package()
 #catkin_package(CATKIN_DEPENDS message_runtime)
 include_directories(${catkin_INCLUDE_DIRS} include)
 
-add_library(goal_sender_class STATIC
-        include/GoalSender.hpp src/goal_sender_class.cpp)
+#add_library(goal_sender_class STATIC
+#        include/GoalSender.hpp src/goal_sender_class.cpp)
 
-add_executable(goal_sender src/main.cpp)
+#add_executable(goal_sender src/main.cpp)
 
 #add_message_file(FILES Lift.msg)
 
-target_link_libraries(goal_sender_class ${catkin_LIBRARIES})
-target_link_libraries(goal_sender goal_sender_class)
+#target_link_libraries(goal_sender_class ${catkin_LIBRARIES})
+#target_link_libraries(goal_sender goal_sender_class)
 
 
