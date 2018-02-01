@@ -68,15 +68,20 @@ void allStop(unsigned int speedMMPS){
 
 ros::NodeHandle_<ArduinoHardware, 2, 2, 80, 105> nh;
 
-void servo_cb( const std_msgs::UInt16& cmd_msg){
-  goAhead(cmd_msg.data);
+
+void servo_cb( const std_msgs::UInt16& msg){
+  
+  
+  //LED switcher
   if (ledflag)  
   {
-    digitalWrite(LED_BUILTIN, HIGH);  
+    digitalWrite(LED_BUILTIN, HIGH); 
+    goAhead(msg.data); 
   }
   else
   {
     digitalWrite(LED_BUILTIN, LOW);
+    turnLeft(msg.data);
   }
   ledflag = !ledflag; 
   
@@ -92,11 +97,13 @@ void setup(){
   nh.subscribe(sub);
   TCCR1B=TCCR1B&0xf8|0x01;    // Pin9,Pin10 PWM 31250Hz
   TCCR2B=TCCR2B&0xf8|0x01;    // Pin3,Pin11 PWM 31250Hz
-  Omni.PIDEnable(0.35,0.02,0,10);
+  //Omni.PIDEnable(0.35,0.02,0,10);
+  Omni.PIDEnable(2.0,1.0,0,10);//PID enable
   pinMode(LED_BUILTIN, OUTPUT);
   
 }
 
 void loop(){
   nh.spinOnce();
+  Omni.PIDRegulate();
 }
