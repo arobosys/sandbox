@@ -6,6 +6,8 @@
 
 #include <ros.h>
 #include <std_msgs/UInt16.h>
+//#include <geometry_msgs/Twist.h>
+#include <malish/NewTwist.h>
 
 #include <MotorWheel.h>
 #include <Omni4WD.h>
@@ -69,26 +71,33 @@ void allStop(unsigned int speedMMPS){
 ros::NodeHandle_<ArduinoHardware, 2, 2, 80, 105> nh;
 
 
-void servo_cb( const std_msgs::UInt16& msg){
-  
-  
+int linear_vel;
+float orient, angle_vel;
+
+void servo_cb( const malish::NewTwist& msg){
   //LED switcher
   if (ledflag)  
   {
     digitalWrite(LED_BUILTIN, HIGH); 
-    goAhead(msg.data); 
+    //goAhead(msg.data); 
   }
   else
   {
     digitalWrite(LED_BUILTIN, LOW);
-    turnLeft(msg.data);
+    //turnLeft(msg.data);
   }
-  ledflag = !ledflag; 
   
+  linear_vel = msg.linear_vel;//= sqrt(msg.linear.x^2 + msg.linear.y^2);
+  orient = msg.orient;//= atan2(msg.linear.y, msg.linear.x);
+  angle_vel = msg.angle_vel;//= msg.angular.z;
+  
+  Omni.setCarMove(linear_vel, orient, angle_vel);
+  
+  ledflag = !ledflag; 
 }
 
 
-ros::Subscriber<std_msgs::UInt16> sub("/omni/command", servo_cb);
+ros::Subscriber<malish::NewTwist> sub("/twist/command", servo_cb);
 
 void setup(){
   

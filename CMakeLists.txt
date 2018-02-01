@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(arobo)
+project(malish)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
@@ -17,6 +17,7 @@ add_service_files(
 add_message_files(
   FILES
   OmniSpeed.msg
+  NewTwist.msg
   )
  generate_messages(
    DEPENDENCIES
@@ -40,8 +41,8 @@ include_directories(
 
 add_executable(omni src/omni.cpp)
 target_link_libraries(omni ${catkin_LIBRARIES})
-add_dependencies(omni arobo_generate_messages_cpp)
+add_dependencies(omni malish_generate_messages_cpp)
 
 add_executable(uart_bridge src/uart_bridge.cpp)
 target_link_libraries(uart_bridge ${catkin_LIBRARIES})
-add_dependencies(uart_bridge arobo_generate_messages_cpp)
+add_dependencies(uart_bridge malish_generate_messages_cpp)
