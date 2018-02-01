@@ -1,24 +1,9 @@
-/*
- * rosserial Servo Control Example
- *
- * This sketch demonstrates the control of hobby R/C servos
- * using ROS and the arduiono
- * 
- * For the full tutorial write up, visit
- * www.ros.org/wiki/rosserial_arduino_demos
- *
- * For more information on the Arduino Servo Library
- * Checkout :
- * http://www.arduino.cc/en/Reference/Servo
- */
-
 #if (ARDUINO >= 100)
  #include <Arduino.h>
 #else
  #include <WProgram.h>
 #endif
 
-//#include <Servo.h> 
 #include <ros.h>
 #include <std_msgs/UInt16.h>
 
@@ -27,6 +12,7 @@
 #include <PID_Beta6.h>
 #include <PinChangeInt.h>
 
+bool ledflag;
 
 irqISR(irq1, isr1);
 MotorWheel wheel1(3, 2, 4, 5, &irq1);
@@ -49,29 +35,68 @@ void goAhead(unsigned int speedMMPS) {
 }
 
 
-ros::NodeHandle  nh;
+void turnLeft(unsigned int speedMMPS){
+    if(Omni.getCarStat()!=Omni4WD::STAT_LEFT) Omni.setCarSlow2Stop(300);
+        Omni.setCarLeft(0);
+        Omni.setCarSpeedMMPS(speedMMPS, 300);
+}
 
-//Servo servo;
+void turnRight(unsigned int speedMMPS){
+    if(Omni.getCarStat()!=Omni4WD::STAT_RIGHT) Omni.setCarSlow2Stop(300);
+        Omni.setCarRight(0);
+        Omni.setCarSpeedMMPS(speedMMPS, 300);
+}
+
+void rotateRight(unsigned int speedMMPS){
+    if(Omni.getCarStat()!=Omni4WD::STAT_ROTATERIGHT) Omni.setCarSlow2Stop(300);
+        Omni.setCarRotateRight(0);
+        Omni.setCarSpeedMMPS(speedMMPS, 300);
+}
+
+void rotateLeft(unsigned int speedMMPS){
+    if(Omni.getCarStat()!=Omni4WD::STAT_ROTATELEFT) Omni.setCarSlow2Stop(300);
+        Omni.setCarRotateLeft(0);
+        Omni.setCarSpeedMMPS(speedMMPS, 300);
+}
+
+void allStop(unsigned int speedMMPS){
+    if(Omni.getCarStat()!=Omni4WD::STAT_STOP) Omni.setCarSlow2Stop(300);
+        Omni.setCarStop();
+}
+
+
+
+ros::NodeHandle_<ArduinoHardware, 2, 2, 80, 105> nh;
 
 void servo_cb( const std_msgs::UInt16& cmd_msg){
-  //servo.write(cmd_msg.data); //set servo angle, should be from 0-180
   goAhead(cmd_msg.data);
-  digitalWrite(13, HIGH-digitalRead(13));  //toggle led  
+  if (ledflag)  
+  {
+    digitalWrite(LED_BUILTIN, HIGH);  
+  }
+  else
+  {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  ledflag = !ledflag; 
+  
 }
 
 
 ros::Subscriber<std_msgs::UInt16> sub("/omni/command", servo_cb);
 
 void setup(){
-  pinMode(13, OUTPUT);
-
+  
+  ledflag = true;
   nh.initNode();
   nh.subscribe(sub);
+  TCCR1B=TCCR1B&0xf8|0x01;    // Pin9,Pin10 PWM 31250Hz
+  TCCR2B=TCCR2B&0xf8|0x01;    // Pin3,Pin11 PWM 31250Hz
+  Omni.PIDEnable(0.35,0.02,0,10);
+  pinMode(LED_BUILTIN, OUTPUT);
   
-  //servo.attach(9); //attach it to pin 9
 }
 
 void loop(){
   nh.spinOnce();
-  //delay(1);
 }
