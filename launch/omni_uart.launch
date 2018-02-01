@@ -1,0 +1,9 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+<!-- Calculate omni speed from vx, vy, wz -->
+	<node pkg="arobo" name="omni" type="omni">
+	</node>
+<!-- Send it to uart -->
+<node pkg="rosserial_python" name="serial_node" type="serial_node.py" output="screen" args="/dev/ttyUSB0" >
+	</node>
+</launch>
