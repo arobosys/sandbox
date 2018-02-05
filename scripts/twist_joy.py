@@ -17,7 +17,7 @@ def callback(data):
     #Constants
     norm_lin_vel = 1000
     norm_orient = pi/2.0
-    norm_angle_vel = pi/2.0
+    norm_angle_vel = pi/4.0
 
     #Joystick Buttons
     lr = data.axes[0]
