@@ -106,8 +106,8 @@ void setup(){
   nh.subscribe(sub);
   TCCR1B=TCCR1B&0xf8|0x01;    // Pin9,Pin10 PWM 31250Hz
   TCCR2B=TCCR2B&0xf8|0x01;    // Pin3,Pin11 PWM 31250Hz
-  //Omni.PIDEnable(0.35,0.02,0,10);
-  Omni.PIDEnable(2.0,1.0,0,10);//PID enable
+  Omni.PIDEnable(0.35,0.02,0,10);
+  //Omni.PIDEnable(2.0,1.0,0,10);//PID enable
   pinMode(LED_BUILTIN, OUTPUT);
   
 }

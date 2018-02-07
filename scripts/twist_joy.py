@@ -6,10 +6,13 @@ from malish.msg import NewTwist
 from sensor_msgs.msg import Joy
 from math import atan2,pi,sqrt
 
+t1 = NewTwist()
+t1.linear_vel = 0;
+t1.orient = 0.0;
+t1.angle_vel = 0.0;
 
 def callback(data):
-    global pub
-    t1 = NewTwist()
+    global pub, t1
 
     #Dead zone constant
     thresh = 0.15
@@ -36,16 +39,20 @@ def callback(data):
     t1.orient = norm_orient + atan2(lr, -ud)  
     t1.angle_vel = (left_turn - right_turn) * norm_angle_vel 
 
-    pub.publish(t1)
+    #pub.publish(t1)
     
 
 def talker():
-    global pub
+    global pub, t1
     rospy.init_node('twist_joy')
     pub = rospy.Publisher('/twist/command', NewTwist, queue_size=10)
     rospy.Subscriber("/joy", Joy, callback)
-    rospy.spin()
+    rate = rospy.Rate(100) # 100hz
 
+    while not rospy.is_shutdown():
+        pub.publish(t1)
+        rate.sleep()
+                                            
 if __name__ == '__main__':
     try:
         talker()
