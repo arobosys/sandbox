@@ -26,18 +26,23 @@ def callback(data):
     lr = data.axes[0]
     ud = data.axes[1]
     throttle = data.buttons[0]
-    left_turn = data.axes[2]
-    right_turn = data.axes[5]
+
+    left_turn = data.axes[4]#2]
+    right_turn = data.axes[5]#5]
 
     #Dead zone logick
     if lr < thresh and lr > -thresh:
         lr = 0
     if ud < thresh and ud > -thresh:
         ud = 0
-        
+    #Dead zone turn
+    turn = left_turn - right_turn
+    if turn < thresh*2 and turn > -thresh*2:
+        turn = 0
+    print(turn)    
     t1.linear_vel = int(throttle * norm_lin_vel * sqrt(lr**2+ud**2))
     t1.orient = norm_orient + atan2(lr, -ud)  
-    t1.angle_vel = (left_turn - right_turn) * norm_angle_vel 
+    t1.angle_vel = (turn) * norm_angle_vel 
 
     #pub.publish(t1)
     

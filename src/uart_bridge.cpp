@@ -2,7 +2,7 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Vector3.h"
-#include "arobo/OmniSpeed.h"
+#include "malish/OmniSpeed.h"
 
 //#include <sstream>
 
@@ -10,9 +10,9 @@
 //#include "Arduino.h"
 
 //#include "MotorWheel.h"
-arobo::OmniSpeed msg;
+malish::OmniSpeed msg;
 
-void callback(const arobo::OmniSpeed::ConstPtr& data)
+void callback(const malish::OmniSpeed::ConstPtr& data)
 {
   //Converting
   ROS_INFO("Omnispeed sent: %f \t%f \t%f \t%f", msg.wfl, msg.wfr, msg.wrl, msg.wrr);
