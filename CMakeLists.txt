@@ -18,6 +18,7 @@ add_message_files(
   FILES
   OmniSpeed.msg
   NewTwist.msg
+  ArduOdom.msg
   Sonar.msg
   )
  generate_messages(
