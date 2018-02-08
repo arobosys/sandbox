@@ -20,7 +20,7 @@ def callback(data):
     #Constants
     norm_lin_vel = 1000
     norm_orient = pi/2.0
-    norm_angle_vel = pi/4.0
+    norm_angle_vel = pi/8.0
 
     #Joystick Buttons
     lr = data.axes[0]
@@ -42,7 +42,7 @@ def callback(data):
     print(turn)    
     t1.linear_vel = int(throttle * norm_lin_vel * sqrt(lr**2+ud**2))
     t1.orient = norm_orient + atan2(lr, -ud)  
-    t1.angle_vel = (turn) * norm_angle_vel 
+    t1.angle_vel = throttle * turn * norm_angle_vel 
 
     #pub.publish(t1)
     
