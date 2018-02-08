@@ -97,16 +97,19 @@ void servo_cb( const malish::NewTwist& msg){
 
 
 ros::Subscriber<malish::NewTwist> sub("/twist/command", servo_cb);
-ros::Publisher odom_pub = nh.advertise<malish::ArduOdom>("ardu_odom", 32);
 
 int vfl, vfr, vrl, vrr;
 malish::ArduOdom odom_msg;
+
+ros::Publisher odom_pub("ardu_odom", &odom_msg);
+
 
 void setup(){
   
   ledflag = true;
   nh.initNode();
   nh.subscribe(sub);
+  nh.advertise(odom_pub);
   TCCR1B=TCCR1B&0xf8|0x01;    // Pin9,Pin10 PWM 31250Hz
   TCCR2B=TCCR2B&0xf8|0x01;    // Pin3,Pin11 PWM 31250Hz
   Omni.PIDEnable(0.35,0.02,0,10);
@@ -117,13 +120,13 @@ void setup(){
 
 void loop(){
 
-	odom_msg.wfl = wheel1.getSpeedRPM;
-	odom_msg.wrl = wheel2.getSpeedRPM;
-	odom_msg.wrr = wheel3.getSpeedRPM;
-	odom_msg.wfr = wheel4.getSpeedRPM;
-	odom_msg.timestamp = ros::Time::now();
-	
-	odom_pub.publish(odom_msg);
+	odom_msg.wfl = wheel1.getSpeedRPM();
+	odom_msg.wrl = wheel2.getSpeedRPM();
+	odom_msg.wrr = wheel3.getSpeedRPM();
+	odom_msg.wfr = wheel4.getSpeedRPM();
+	odom_msg.timestamp.sec = 0;
+	odom_msg.timestamp.nsec = 0;
+	odom_pub.publish(&odom_msg);
 	
   	nh.spinOnce();
   	Omni.PIDRegulate();
