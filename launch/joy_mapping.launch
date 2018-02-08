@@ -7,7 +7,9 @@
   <node pkg="rosserial_python" name="serial_node" type="serial_node.py" output="screen"
        args="/dev/ttyUSB0" >
   </node>
-  <include>
-  file="$(find buggy)/launch"
+  <include
+  file="$(find buggy_2dnav)/launch/mapping.launch"
+  clear_params="false"
+  pass_all_args="true">
   </include>
 </launch>
