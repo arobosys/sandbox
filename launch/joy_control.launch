@@ -1,7 +1,7 @@
 <launch>
   <node pkg="joy" type="joy_node" name="joy_node">
   </node>
-  <node pkg="malish" name="twist_joy" type="twist_joy.py" >
+  <node pkg="malish" name="twist_joy" type="twist_joy.py" output="screen" >
   </node>
 
   <node pkg="rosserial_python" name="serial_node" type="serial_node.py" output="screen"
