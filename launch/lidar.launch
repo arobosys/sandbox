@@ -1,0 +1,18 @@
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1 0 0 0 0 0 1 map laser_link 100" />
+<!--Need to change to SCIP2.0 from UART before usage -->
+  <!--node name="initial_laser" pkg="urg_node"
+    type="getID" >
+    <param name="serial_port" value="/dev/ttyACM0" />
+  </node-->
+
+  <node name="horizontal_laser" pkg="urg_node"
+    type="urg_node" >
+    <param name="serial_port" value="/dev/ttyACM0" />
+    <param name="frame_id" value="laser_link" />
+    <!--remap from="scan" to="vertical_laser_2d" /-->
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" required="true"
+       args="-d $(find malish)/rviz/lidar.rviz" />
+       </launch>

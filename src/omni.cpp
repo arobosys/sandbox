@@ -2,12 +2,12 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Vector3.h"
-#include "arobo/OmniSpeed.h"
+#include "malish/OmniSpeed.h"
 
 #include <sstream>
 
 float rwheel, lx, ly; 
-arobo::OmniSpeed msg;
+malish::OmniSpeed msg;
  
 void callback(const geometry_msgs::Twist::ConstPtr& data)
 {
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "omni_convertor");
   ros::NodeHandle n;
-  ros::Publisher pub = n.advertise<arobo::OmniSpeed>("/omni/command", 1000);
+  ros::Publisher pub = n.advertise<malish::OmniSpeed>("/omni/command", 1000);
   ros::Subscriber sub = n.subscribe("/twist/command", 1000, callback);
   ros::Rate loop_rate(10);
   

@@ -18,6 +18,7 @@ add_message_files(
   FILES
   OmniSpeed.msg
   NewTwist.msg
+  Sonar.msg
   )
  generate_messages(
    DEPENDENCIES
