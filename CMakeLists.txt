@@ -9,11 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
 )
-add_service_files(
-  FILES
-  FindDistance.srv
-  FindText.srv
-  )
+#add_service_files(
+#  FILES
+#  )
 add_message_files(
   FILES
   OmniSpeed.msg
@@ -33,18 +31,3 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   )
 
-#include_directories(/home/georgy/catkin_ws/src/arobo/include/lib/MotorWheel)
-#include_directories(/home/georgy/catkin_ws/src/arobo/include/lib/PID_Beta6)
-#include_directories(/home/georgy/catkin_ws/src/arobo/include/lib/PinChangeInt)
-#include_directories(/home/georgy/Documents/arduino-1.8.5/hardware/arduino/avr/cores/arduino)
-#include_directories(/home/georgy/Documents/arduino-1.8.5/hardware/tools/avr/avr/include)
-
-
-
-add_executable(omni src/omni.cpp)
-target_link_libraries(omni ${catkin_LIBRARIES})
-add_dependencies(omni malish_generate_messages_cpp)
-
-add_executable(uart_bridge src/uart_bridge.cpp)
-target_link_libraries(uart_bridge ${catkin_LIBRARIES})
-add_dependencies(uart_bridge malish_generate_messages_cpp)

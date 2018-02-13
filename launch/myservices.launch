@@ -1,9 +1,0 @@
-<!-- -*- mode: XML -*- -->
-<launch>
-<!-- node, which search text -->
-	<node pkg="arobo" name="text_finder" type="textrecog.py">
-	</node>
-<!-- node, which find out the distance -->
-	<node pkg="arobo" name="cvservice" type="platerecog.py">
-	</node>
-</launch>
