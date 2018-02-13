@@ -18,6 +18,7 @@ add_message_files(
   NewTwist.msg
   ArduOdom.msg
   Sonar.msg
+  Diode.msg
   )
  generate_messages(
    DEPENDENCIES
