@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find buggy_2dnav)/launch/mapping.launch">
+        <arg name="rtabmap_args" value=""/>
+        <arg name="mapping_mode" value="false"/>
+    </include>
+</launch>
