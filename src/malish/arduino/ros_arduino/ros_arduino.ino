@@ -124,8 +124,7 @@ void loop(){
 	odom_msg.wrl = wheel2.getSpeedRPM();
 	odom_msg.wrr = wheel3.getSpeedRPM();
 	odom_msg.wfr = wheel4.getSpeedRPM();
-	odom_msg.timestamp.sec = 0;
-	odom_msg.timestamp.nsec = 0;
+	odom_msg.timestamp = nh.now();
 	odom_pub.publish(&odom_msg);
 	
   	nh.spinOnce();

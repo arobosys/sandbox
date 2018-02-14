@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  tf
   message_generation
 )
 #add_service_files(
@@ -18,6 +19,7 @@ add_message_files(
   NewTwist.msg
   ArduOdom.msg
   Sonar.msg
+  Diode.msg
   )
  generate_messages(
    DEPENDENCIES
@@ -30,4 +32,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   )
+add_executable(omni_odom src/omni_odom.cpp)
+target_link_libraries(omni_odom ${catkin_LIBRARIES})
+add_dependencies(omni_odom malish_generate_messages_cpp)
 
