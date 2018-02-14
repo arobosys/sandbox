@@ -47,3 +47,12 @@ sudo update-alternatives --remove-all g++
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 10
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 10
 ```
+
+###Building of source code
+
+```bash
+sudo rm -r ~/catkin_ws
+git clone https://github.com/arobosys/malish catkin_ws
+cd ~/catkin_ws
+catkin_make -DCATKIN_BLACKLIST_PACKAGES="zed-ros-wrapper" #For pc without cuda
+```
