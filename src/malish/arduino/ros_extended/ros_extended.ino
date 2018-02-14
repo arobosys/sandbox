@@ -11,6 +11,18 @@
 #include <ros.h>
 #include <malish/Diode.h>
 #include <malish/Sonar.h>
+#include <malish/AmperkaImu.h>
+#include <sensor_msgs/ChannelFloat32.h>
+
+// IMU dependencies
+#include <sensor_msgs/Imu.h>
+// библиотека для работы I²C
+#include <Wire.h>
+// библиотека для работы с модулями IMU
+#include <TroykaIMU.h>
+
+#define G 9.80665F
+#define imuFrame "imu"
 
 int buzz = 6;
 
@@ -22,10 +34,21 @@ bool dio1 = false;
 bool dio2 = false;
 bool dio3 = false;
 
+/*
+ * Set pins for sonars.
+ */
 int echoPin = 10;
 int trigPin = 9;
 Ultrasonic ultrasonic(trigPin, echoPin);
 
+// Creates object to work with accelerometer.
+Accelerometer accel;
+// Creates object to work with gyroscope.
+Gyroscope gyro;
+
+/*
+ * Activate diodes callback function (enable/disable).
+ */
 void callback( const malish::Diode& data){
     dio1 = data.dio1;
     dio2 = data.dio2;
@@ -38,6 +61,26 @@ ros::Subscriber<malish::Diode> sub("/led", &callback);
 malish::Sonar son;
 ros::Publisher pub("/sonars", &son);
 
+uint32_t seq_imu = 0;
+malish::AmperkaImu imuMsg;
+ros::Publisher imuPublisher("/arduino/imu", &imuMsg);
+
+void sendImu() {
+    // Считываем данные с акселерометра в единицах G.
+    accel.readGXYZ(&imuMsg.linear_acceleration.x, &imuMsg.linear_acceleration.y, &imuMsg.linear_acceleration.z);
+    imuMsg.linear_acceleration.x *= -G;
+    imuMsg.linear_acceleration.y *= -G;
+    imuMsg.linear_acceleration.z *= G;
+    // Считываем данные с акселерометра в радианах в секунду.
+    gyro.readRadPerSecXYZ(&imuMsg.angular_velocity.x, &imuMsg.angular_velocity.y, &imuMsg.angular_velocity.z);
+    imuMsg.angular_velocity.x *= 1;
+    imuMsg.angular_velocity.y *= -1;
+    imuMsg.angular_velocity.z *= -1;
+
+    imuMsg.timestamp = nh.now();
+    imuPublisher.publish(&imuMsg);
+}
+
 void setup() {
     pinMode(led1, OUTPUT);
     pinMode(led2, OUTPUT);
@@ -45,6 +88,12 @@ void setup() {
     nh.initNode();
     nh.advertise(pub);
     nh.subscribe(sub);
+    nh.advertise(imuPublisher);
+    // Accelerometer initialization.
+    accel.begin();
+    // Gyroscope initialization.
+    gyro.begin();
+
 }
 
 void loop()
@@ -74,6 +123,7 @@ void loop()
 
     pub.publish(&son);
     nh.spinOnce();
+    sendImu();
 
     delay(10);
 }
