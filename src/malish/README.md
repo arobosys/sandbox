@@ -3,9 +3,9 @@
 ------------------
 
 
-###System setup:
+### System setup:
 
-..* ROS setup.
+* ROS setup.
 
 ```bash
 sudo apt-get update
@@ -30,13 +30,13 @@ catkin_make
 sudo apt-get install ros-kinetic-joy ros-kinetic-rosserial ros-kinetic-pcl-ros ros-kinetic-tf2-geometry-msgs ros-kinetic-rtabmap ros-kinetic-rtabmap-ros ros-kinetic-urg-node ros-kinetic-image-view ros-kinetic-robot-localization ros-kinetic-move-base ros-kinetic-teb-local-planner ros-kinetic-global-planner ros-kinetic-teb-local-planner ros-kinetic-range-sensor-layer
 ```
 
-..* User interface:
+* User interface:
 
 ```bash
 sudo apt-get install terminator xboxdrv
 ```
 
-..* GCC/G++ 7
+* GCC/G++ 7
 
 ```bash
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
@@ -48,7 +48,7 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 10
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 10
 ```
 
-###Building of source code
+### Building of source code
 
 ```bash
 sudo rm -r ~/catkin_ws
@@ -56,3 +56,7 @@ git clone https://github.com/arobosys/malish catkin_ws
 cd ~/catkin_ws
 catkin_make -DCATKIN_BLACKLIST_PACKAGES="zed-ros-wrapper" #For pc without cuda
 ```
+
+### System settings
+Add ros uri to bash
+Modify /etc/hosts
