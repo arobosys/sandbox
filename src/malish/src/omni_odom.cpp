@@ -81,7 +81,7 @@ public:
 
         //since all odometry is 6DOF we'll need a quaternion created from yaw
         geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
-
+#ifdef __ODOM_BROADCASTER
         //first, we'll publish the transform over tf
         geometry_msgs::TransformStamped odom_trans;
         odom_trans.header.stamp = current_time;
@@ -95,11 +95,15 @@ public:
 
         //send the transform
         odom_broadcaster.sendTransform(odom_trans);
-
+#endif
         //next, we'll publish the odometry message over ROS
         nav_msgs::Odometry odom;
         odom.header.stamp = current_time;
+#ifdef __ODOM_BROADCASTER
         odom.header.frame_id = "odom";
+#else
+        odom.header.frame_id = "base_link";
+#endif
 
         //set the position
         odom.pose.pose.position.x = x;
@@ -108,7 +112,11 @@ public:
         odom.pose.pose.orientation = odom_quat;
 
         //set the velocity
+#ifdef __ODOM_BROADCASTER
         odom.child_frame_id = "base_link";
+#else
+        odom.child_frame_id = "omni_odom";
+#endif
         odom.twist.twist.linear.x = vx;
         odom.twist.twist.linear.y = vy;
         odom.twist.twist.angular.z = vth;
@@ -128,7 +136,9 @@ protected:
     double x, y, th;
 
     ros::Time current_time, last_time;
+#ifdef __ODOM_BROADCASTER
     tf::TransformBroadcaster odom_broadcaster;
+#endif
 };
 
 
