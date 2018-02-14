@@ -20,7 +20,9 @@ add_message_files(
   ArduOdom.msg
   Sonar.msg
   Diode.msg
-  )
+  Vector3_32.msg
+  AmperkaImu.msg
+)
  generate_messages(
    DEPENDENCIES
    sensor_msgs

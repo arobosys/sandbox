@@ -60,3 +60,8 @@ catkin_make -DCATKIN_BLACKLIST_PACKAGES="zed-ros-wrapper" #For pc without cuda
 ### System settings
 Add ros uri to bash
 Modify /etc/hosts
+
+###Arduino depends on:
+- TroykaIMU.h https://github.com/amperka/Troyka-IMU
+- Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
+In Ultrasonic.cpp change line21: Time_out=6000;
