@@ -1,6 +1,6 @@
-# malish
-Репо по минироботу
-------------------
+# malish  
+## Репо по минироботу  
+Добавлена тестовая ветвь.
 
 
 ### System setup:
@@ -61,7 +61,23 @@ catkin_make -DCATKIN_BLACKLIST_PACKAGES="zed-ros-wrapper" #For pc without cuda
 Add ros uri to bash
 Modify /etc/hosts
 
-###Arduino depends on:
-- TroykaIMU.h https://github.com/amperka/Troyka-IMU
-- Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
+### Arduino devices
+#### IMU connection  
+'V' - 3.3V;
+'G' - ground;
+Arduino UNO:  
+'D' - A3;
+'C' - A4;
+Arduino MEGA 2560
+'D' - SDA 20;
+'C' - SCL 21;
+Depends upon:
+TroykaIMU.h https://github.com/amperka/Troyka-IMU
+
+#### Sonars connection  
+
+
+Depends upon:
+Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
 In Ultrasonic.cpp change line21: Time_out=6000;
+
