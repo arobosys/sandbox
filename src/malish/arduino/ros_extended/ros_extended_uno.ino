@@ -55,7 +55,7 @@ void callback( const malish::Diode& data){
     dio3 = data.dio3;
 }
 
-ros::NodeHandle nh;//_<ArduinoHardware, 2, 2, 80, 105> nh;
+ros::NodeHandle <ArduinoHardware, 2, 2, 80, 105> nh;
 ros::Subscriber<malish::Diode> sub("/led", &callback);
 
 malish::Sonar son;
@@ -124,7 +124,7 @@ void loop()
     pub.publish(&son);
     sendImu();
     nh.spinOnce();
-    
+
 
     delay(10);
 }

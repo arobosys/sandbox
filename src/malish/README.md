@@ -1,5 +1,5 @@
-# malish
-Репо по минироботу
+# malish  
+## Репо по минироботу  
 Добавлена тестовая ветвь.
 
 requirements:
@@ -26,7 +26,42 @@ sudo apt-get install terminator xboxdrv
 
 sudo apt-get install ros-kinetic-joy ros-kinetic-rosserial ros-kinetic-pcl-ros ros-kinetic-tf2-geometry-msgs ros-kinetic-rtabmap ros-kinetic-rtabmap-ros ros-kinetic-urg-node ros-kinetic-image-view ros-kinetic-robot-localization ros-kinetic-move-base ros-kinetic-teb-local-planner ros-kinetic-global-planner ros-kinetic-teb-local-planner ros-kinetic-range-sensor-layer
 
-Arduino depends on:
-- TroykaIMU.h https://github.com/amperka/Troyka-IMU
-- Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
+* GCC/G++ 7
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+sudo apt-get install gcc-7 g++-7
+sudo update-alternatives --remove-all gcc
+sudo update-alternatives --remove-all g++
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 10
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 10
+
+### Building of source code  
+sudo rm -r ~/catkin_ws
+git clone https://github.com/arobosys/malish catkin_ws
+cd ~/catkin_ws
+catkin_make -DCATKIN_BLACKLIST_PACKAGES="zed-ros-wrapper" #For pc without cuda
+
+### System settings
+Add ros uri to bash
+Modify /etc/hosts
+
+### Arduino devices
+#### IMU connection  
+'V' - 3.3V;
+'G' - ground;
+Arduino UNO:  
+'D' - A3;
+'C' - A4;
+Arduino MEGA 2560
+'D' - SDA 20;
+'C' - SCL 21;
+Depends upon:
+TroykaIMU.h https://github.com/amperka/Troyka-IMU
+
+#### Sonars connection  
+
+
+Depends upon:
+Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
 In Ultrasonic.cpp change line21: Time_out=6000;
+
