@@ -84,9 +84,9 @@ def talker():
 
     while not rospy.is_shutdown():
         if flag_no_cmd:
-            pub.publish(t1)
-        else:
             pub.publish(t2)
+        else:
+            pub.publish(t1)
         rate.sleep()
                                             
 if __name__ == '__main__':
