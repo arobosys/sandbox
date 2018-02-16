@@ -8,32 +8,32 @@ TebLocalPlannerROS:
  dt_ref: 0.3
  dt_hysteresis: 0.1*
  global_plan_overwrite_orientation: True
- allow_init_with_backwards_motion: False
+ allow_init_with_backwards_motion: True
  max_global_plan_lookahead_dist: 5.0
  feasibility_check_no_poses: 5
 
  # Robot
 
- max_vel_x: 1.0
- max_vel_x_backwards: 1.0
- max_vel_y: 1.0
- max_vel_theta: 0.5 # the angular velocity is also bounded by min_turning_radius in case of a carlike robot (r = v / omega)
- acc_lim_x: 0.35
- acc_lim_y: 0.35
- acc_lim_theta: 0.5
+ max_vel_x: 4.0
+ max_vel_x_backwards: 4.0
+ max_vel_y: 4.0
+ max_vel_theta: 1.0 # the angular velocity is also bounded by min_turning_radius in case of a carlike robot (r = v / omega)
+ acc_lim_x: 1.35
+ acc_lim_y: 1.35
+ acc_lim_theta: 1.5
  max_global_plan_lookahead_dist: 8.0
 
 
  # ********************** Carlike robot parameters ********************
  min_turning_radius: 0.0        # Min turning radius of the carlike robot (compute value using a model or adjust with rqt_reconfigure manually)
-# wheelbase: 0.49                 # Wheelbase of our robot
-# cmd_angle_instead_rotvel: True # stage simulator takes the angle instead of the rotvel as input (twist message)
+ # wheelbase: 0.49                 # Wheelbase of our robot
+ # cmd_angle_instead_rotvel: True # stage simulator takes the angle instead of the rotvel as input (twist message)
  # ********************************************************************
 
  footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
-   type: "polygon"
-   vertices: [ [-0.28, 0.23], [0.28, 0.23], [0.28, -0.23], [-0.28, -0.23] ] # for type "polygon"
-
+ #  type: "polygon"
+ #  vertices: [ [-0.28, 0.23], [0.28, 0.23], [0.28, -0.23], [-0.28, -0.23] ] # for type "polygon"
+ type: "point"
  # GoalTolerance
 
  xy_goal_tolerance: 0.3
