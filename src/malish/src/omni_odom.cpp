@@ -5,6 +5,7 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include "malish/ArduOdom.h"
+#include <boost/assign.hpp>
 
 #include <sstream>
 
