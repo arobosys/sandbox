@@ -1,5 +1,5 @@
-int16 wfl
-int16 wfr
-int16 wrl
-int16 wrr
+float32 wfl
+float32 wfr
+float32 wrl
+float32 wrr
 time timestamp
