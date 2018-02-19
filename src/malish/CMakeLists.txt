@@ -21,7 +21,7 @@ add_message_files(
   Sonar.msg
   Diode.msg
   Vector3_32.msg
-  AmperkaImu.msg
+  ArduImu.msg
 )
  generate_messages(
    DEPENDENCIES

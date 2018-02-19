@@ -11,7 +11,7 @@
 #include <ros.h>
 #include <malish/Diode.h>
 #include <malish/Sonar.h>
-#include <malish/AmperkaImu.h>
+#include <malish/ArduImu.h>
 #include <sensor_msgs/ChannelFloat32.h>
 
 // IMU dependencies
@@ -76,7 +76,7 @@ ros::Publisher pub("/sonars", &son);
 
 // Publisher for IMU.
 uint32_t seq_imu = 0;
-malish::AmperkaImu imuMsg;
+malish::ArduImu imuMsg;
 ros::Publisher imuPublisher("/arduino/imu", &imuMsg);
 
 void sendImu() {
