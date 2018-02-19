@@ -7,8 +7,7 @@
 #include "malish/ArduOdom.h"
 #include <boost/assign.hpp>
 
-#include <sstream>
-#define __OMNI_ODOM_DEBUG
+//#define __OMNI_ODOM_DEBUG
 
 class OmniWheelOdometry
 {
@@ -123,7 +122,7 @@ public:
         odom.pose.pose.position.y = y;
         odom.pose.pose.position.z = 0.0;
         odom.pose.pose.orientation = odom_quat;
-	odom.pose.covariance =  boost::assign::list_of (1e-3) (0) (0)  (0)  (0)  (0)
+	    odom.pose.covariance =  boost::assign::list_of (1e-3) (0) (0)  (0)  (0)  (0)
                                                        (0) (1e-3)  (0)  (0)  (0)  (0)
                                                        (0)   (0)  (1e6) (0)  (0)  (0)
                                                        (0)   (0)   (0) (1e6) (0)  (0)
@@ -140,7 +139,7 @@ public:
         odom.twist.twist.linear.x = vx;
         odom.twist.twist.linear.y = vy;
         odom.twist.twist.angular.z = vth;
-	odom.twist.covariance =  boost::assign::list_of (1e-3) (0)   (0)  (0)  (0)  (0)
+	    odom.twist.covariance =  boost::assign::list_of (1e-3) (0)   (0)  (0)  (0)  (0)
                                                       (0) (1e-3)  (0)  (0)  (0)  (0)
                                                       (0)   (0)  (1e6) (0)  (0)  (0)
                                                       (0)   (0)   (0) (1e6) (0)  (0)
