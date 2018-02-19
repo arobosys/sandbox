@@ -17,7 +17,7 @@
 #include <PID_Beta6.h>
 #include <PinChangeInt.h>
 
-#define RPMtoW (6.2831853f/60.f)
+#define RPMtoW (6.2831853f/60.f/REDUCTION_RATIO)
 
 bool ledflag;
 
