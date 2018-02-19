@@ -38,3 +38,8 @@ add_executable(omni_odom src/omni_odom.cpp)
 target_link_libraries(omni_odom ${catkin_LIBRARIES})
 add_dependencies(omni_odom malish_generate_messages_cpp)
 
+add_executable(imu_transform src/imu_transform.cpp)
+target_link_libraries(imu_transform ${catkin_LIBRARIES})
+add_dependencies(imu_transform malish_generate_messages_cpp)
+
+

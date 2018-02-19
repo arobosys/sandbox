@@ -14,29 +14,30 @@
 #include <malish/ArduImu.h>
 
 class IMU_transform {
+  public:;
     IMU_transform() {
         ros::NodeHandle nh_;
         // Subscribe to IMU data publishing from arduino.
         ardu_imu_sub_ = nh_.subscribe("/arduino/imu", 10, &IMU_transform::arduImuCallback, this);
 
-        imu_tr_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu/transform", 10);
+        std_imu_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu/transform", 10);
 
     }
 
     // Publish as std IMU sensor message.
     void arduImuCallback (const malish::ArduImu& ardu_imu) {
-        std_imu_msg.linear_velocity.x = ardu_imu.linear_velocity.x;
-        std_imu_msg.linear_velocity.y = ardu_imu.linear_velocity.y;
-        std_imu_msg.linear_velocity.z = ardu_imu.linear_velocity.z;
+        std_imu_msg.linear_acceleration.x = ardu_imu.linear_acceleration.x;
+        std_imu_msg.linear_acceleration.y = ardu_imu.linear_acceleration.y;
+        std_imu_msg.linear_acceleration.z = ardu_imu.linear_acceleration.z;
         std_imu_msg.angular_velocity.x = ardu_imu.angular_velocity.x;
         std_imu_msg.angular_velocity.y = ardu_imu.angular_velocity.y;
         std_imu_msg.angular_velocity.z = ardu_imu.angular_velocity.z;
         std_imu_msg.header.stamp = ardu_imu.timestamp;
 
-        imu_tr_pub_.pub(std_imu_msg);
+        std_imu_pub_.publish(std_imu_msg);
     }
 
-private:;
+  private:;
     ros::Subscriber ardu_imu_sub_;
     ros::Publisher std_imu_pub_;
     sensor_msgs::Imu std_imu_msg;
