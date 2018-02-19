@@ -76,8 +76,8 @@ public:
         }
         //Converting matrix
         vx = 0.25*rwheel*(-wheel.wfl + wheel.wfr - wheel.wrl + wheel.wrr );         // ++++
-        vy = 0.25*rwheel*( wheel.wfl + wheel.wfr - wheel.wrl - wheel.wrr );         // -++-
-        vth = 0.25*rwheel/(lx+ly)*(wheel.wfl + wheel.wfr + wheel.wrl + wheel.wrr ); // -+-+
+        vy = 0.25*rwheel*( -wheel.wfl - wheel.wfr + wheel.wrl + wheel.wrr );         // -++-
+        vth = 0.25*rwheel/(lx+ly)*(-wheel.wfl - wheel.wfr - wheel.wrl - wheel.wrr ); // -+-+
         //vth = ((lx+ly))/rwheel; size = scan_in->intensities.size();
         //compute odometry in a typical way given the velocities of the robot
 
