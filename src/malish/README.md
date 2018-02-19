@@ -61,23 +61,24 @@ catkin_make -DCATKIN_BLACKLIST_PACKAGES="zed-ros-wrapper" #For pc without cuda
 Add ros uri to bash
 Modify /etc/hosts
 
-### Arduino devices
+### Arduino devices  
 #### IMU connection  
-'V' - 3.3V;
-'G' - ground;
+'V' - 3.3V;  
+'G' - ground;  
 Arduino UNO:  
-'D' - A3;
-'C' - A4;
-Arduino MEGA 2560
-'D' - SDA 20;
-'C' - SCL 21;
-Depends upon:
-TroykaIMU.h https://github.com/amperka/Troyka-IMU
+'D' - A3;  
+'C' - A4;  
+Arduino MEGA 2560  
+'D' - SDA 20;  
+'C' - SCL 21;  
+Depends upon:  
+TroykaIMU.h https://github.com/amperka/Troyka-IMU  
 
-#### Sonars connection  
+#### Sonars connection 
+            left, right, front, rear   
+trig pins =   30,    32,    34,   36;  
+echo pins =   31,    33,    35,   37;  
 
-
-Depends upon:
-Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
-In Ultrasonic.cpp change line21: Time_out=6000;
-
+Depends upon:  
+Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04  
+In Ultrasonic.cpp change line21: Time_out=6000;  
