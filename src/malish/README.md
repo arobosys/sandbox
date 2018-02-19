@@ -76,8 +76,8 @@ TroykaIMU.h https://github.com/amperka/Troyka-IMU
 
 #### Sonars connection 
             left, right, front, rear   
-trig pins =   30,    32,    34,   36;  
-echo pins =   31,    33,    35,   37;  
+trig pins =   50,    46,    38,   42;  
+echo pins =   48,    44,    36,   40;  
 
 Depends upon:  
 Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04  
