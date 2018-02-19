@@ -7,6 +7,7 @@
 #include <ros.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Float32.h>
 //#include <geometry_msgs/Twist.h>
 #include <malish/NewTwist.h>
 #include <malish/ArduOdom.h>
@@ -15,6 +16,8 @@
 #include <Omni4WD.h>
 #include <PID_Beta6.h>
 #include <PinChangeInt.h>
+
+#define RPMtoW (6.2831853f/60.f/REDUCTION_RATIO)
 
 bool ledflag;
 
@@ -120,14 +123,14 @@ void setup(){
 
 void loop(){
 
-	odom_msg.wfl = wheel1.getSpeedRPM();
-	odom_msg.wrl = wheel2.getSpeedRPM();
-	odom_msg.wrr = wheel3.getSpeedRPM();
-	odom_msg.wfr = wheel4.getSpeedRPM();
+	odom_msg.wfl = (float)(RPMtoW) * wheel1.getSpeedRPM();
+	odom_msg.wrl = (float)(RPMtoW) * wheel2.getSpeedRPM();
+	odom_msg.wrr = (float)(RPMtoW) * wheel3.getSpeedRPM();
+	odom_msg.wfr = (float)(RPMtoW) * wheel4.getSpeedRPM();
 	odom_msg.timestamp = nh.now();
 	odom_pub.publish(&odom_msg);
 	
   	nh.spinOnce();
   	Omni.PIDRegulate();
-  	
+
 }
