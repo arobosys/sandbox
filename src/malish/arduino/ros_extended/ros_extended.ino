@@ -41,8 +41,8 @@ bool dio3 = false;
 /*
  * Set pins for sonars.
  */
-int trigPin[4] = {30, 32, 34, 36};
-int echoPin[4] = {31, 33, 35, 37};
+int trigPin[4] = {50, 46, 38, 42};
+int echoPin[4] = {48, 34, 36, 40};
 Ultrasonic ultrasonic1(trigPin[0], echoPin[0]);
 Ultrasonic ultrasonic2(trigPin[1], echoPin[1]);
 Ultrasonic ultrasonic3(trigPin[2], echoPin[2]);
