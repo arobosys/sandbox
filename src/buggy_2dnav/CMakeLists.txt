@@ -10,6 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
         sensor_msgs
         roscpp
         tf
+        move_base_msgs
+        actionlib
         )
 
 catkin_package()
@@ -20,3 +22,6 @@ include_directories(
 
 add_library(sync_odometry src/sync_odometry_nodelet.cpp)
 target_link_libraries(sync_odometry ${catkin_LIBRARIES})
+
+add_library(send_goals src/send_goals.cpp)
+target_link_libraries(send_goals ${catkin_LIBRARIES})
