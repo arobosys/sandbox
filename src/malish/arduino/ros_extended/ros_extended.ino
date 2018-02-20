@@ -10,7 +10,7 @@
 
 #include <ros.h>
 #include <malish/Diode.h>
-#include <malish/Sonar.h>
+#include <malish/ArduSonar.h>
 #include <malish/ArduImu.h>
 #include <sensor_msgs/ChannelFloat32.h>
 
@@ -22,7 +22,6 @@
 #include <TroykaIMU.h>
 
 #define G 9.80665F
-#define imuFrame "imu"
 
 // Max active distance of sonars.
 static const int max_son_dist = 80;

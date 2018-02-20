@@ -1,8 +1,8 @@
-// Created by evgeny on 19.02.18.
+// Created by Evgeny on 19.02.18.
 /*!
  * \file imu_transform.cpp
  *
- * Gets imu data from arduino and transforms to standard ROS sensor_msgs/Imu.msg messages.
+ * Gets imu data from Arduino and transforms to standard ROS sensor_msgs/Imu.msg messages.
  *
  * \author Evgeny Shtanov
  *
@@ -13,6 +13,9 @@
 #include <sensor_msgs/Imu.h>
 #include <malish/ArduImu.h>
 
+#define imuFrame "imu"
+static uint32_t seq_imu = 0;
+
 class IMU_transform {
   public:;
     IMU_transform() {
@@ -22,6 +25,7 @@ class IMU_transform {
 
         std_imu_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu/transform", 10);
 
+        std_imu_msg.header.frame_id = imuFrame;
     }
 
     // Publish as std IMU sensor message.
@@ -33,6 +37,7 @@ class IMU_transform {
         std_imu_msg.angular_velocity.y = ardu_imu.angular_velocity.y;
         std_imu_msg.angular_velocity.z = ardu_imu.angular_velocity.z;
         std_imu_msg.header.stamp = ardu_imu.timestamp;
+        std_imu_msg.header.seq = ++seq_imu;
 
         std_imu_pub_.publish(std_imu_msg);
     }
