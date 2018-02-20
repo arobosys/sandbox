@@ -29,8 +29,8 @@ static const int max_son_dist = 80;
 // Pin for audio device.
 int buzz = 6;
 // Pins for leds, debug.
-int led1 = 12;
-int led2 = 11;
+int led1 = 51;
+int led2 = 53;
 int led3 = 8;
 
 bool dio1 = false;
@@ -41,7 +41,7 @@ bool dio3 = false;
  * Set pins for sonars.
  */
 int trigPin[4] = {50, 46, 38, 42};
-int echoPin[4] = {48, 34, 36, 40};
+int echoPin[4] = {48, 44, 36, 40};
 Ultrasonic ultrasonic1(trigPin[0], echoPin[0]);
 Ultrasonic ultrasonic2(trigPin[1], echoPin[1]);
 Ultrasonic ultrasonic3(trigPin[2], echoPin[2]);
@@ -70,7 +70,7 @@ void callback( const malish::Diode& data){
 ros::NodeHandle nh;
 ros::Subscriber<malish::Diode> sub("/led", &callback);
 
-malish::Sonar son;
+malish::ArduSonar son;
 ros::Publisher pub("/sonars", &son);
 
 // Publisher for IMU.
