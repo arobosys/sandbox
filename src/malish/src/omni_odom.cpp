@@ -50,7 +50,7 @@ public:
         }
         if (nh_.getParam("lx", lx))
         {
-            ROS_INFO("Got omni param(rwheel): %f", lx);
+            ROS_INFO("Got omni param(lx): %f", lx);
         }
         else
         {
@@ -58,7 +58,7 @@ public:
         }
         if (nh_.getParam("ly", ly))
         {
-            ROS_INFO("Got omni param(rwheel): %f", ly);
+            ROS_INFO("Got omni param(ly): %f", ly);
         }
         else
         {
