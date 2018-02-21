@@ -27,6 +27,8 @@ t2.angle_vel = 0.0;
 
 flag_no_cmd = False;
 
+lift = False;
+
 def callback(data):
     global pub, t1, flag_no_cmd, pub_lift
 
@@ -42,14 +44,25 @@ def callback(data):
     lr = data.axes[0]
     ud = data.axes[1]
     throttle = data.buttons[0]
+    lifter = data.buttons[4]
+    unlifter = data.buttons[5]
 
     flag_no_cmd = bool(data.buttons[3])
 
     left_turn = data.axes[4]#2]
     right_turn = data.axes[5]#5]
 
-    if
+    lift_msg = Diode()
+    if (lifter==1) and (unlifter!=1):
+        lift_msg.dio1 = True
+        lift_msg.dio2 = False
+        lift_msg.dio3 = False
 
+    if (lifter!=1) and (unlifter==1):
+        lift_msg.dio1 = False
+        lift_msg.dio2 = True
+        lift_msg.dio3 = True
+    
     #Dead zone logick
     if lr < thresh and lr > -thresh:
         lr = 0
@@ -61,12 +74,12 @@ def callback(data):
     turn = left_turn - right_turn
     if turn < thresh*2 and turn > -thresh*2:
         turn = 0
-    print(turn)    
     t1.linear_vel = int(throttle * norm_lin_vel * sqrt(lr**2+ud**2))
     t1.orient = norm_orient + atan2(lr, -ud)  
     t1.angle_vel = throttle * turn * norm_angle_vel 
 	
     #pub.publish(t1)
+    pub_lift.publish(lift_msg)
 
 def vel_callback(msg):
     global vel_msg, t2
@@ -86,7 +99,6 @@ def talker():
     rospy.Subscriber("/cmd_vel", Twist, vel_callback)
 
     rate = rospy.Rate(100) # 100hz
-    print flag_no_cmd,"flag value"
 
     while not rospy.is_shutdown():
         if flag_no_cmd:
