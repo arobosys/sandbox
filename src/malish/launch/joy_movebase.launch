@@ -1,0 +1,15 @@
+<launch>
+  <node pkg="joy" type="joy_node" name="joy_node">
+  </node>
+  <node pkg="malish" name="twist_joy" type="twist_joy.py" >
+  </node>
+
+  <node pkg="rosserial_python" name="serial_node" type="serial_node.py" output="screen"
+       args="/dev/ttyUSB0" >
+  </node>
+  <include
+  file="$(find buggy_2dnav)/launch/move_base.launch"
+  clear_params="false"
+  pass_all_args="true">
+  </include>
+</launch>
