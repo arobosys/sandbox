@@ -3,8 +3,20 @@
   </node>
   <node pkg="malish" name="twist_joy" type="twist_joy.py" output="screen" >
   </node>
+  <node pkg="malish" name="imu_transform" type="imu_transform" >
+  </node>
+  <node pkg="malish" name="sonar_transform" type="sonar_transform" >
+  </node>
+  <node pkg="malish" name="omni_odom" type="omni_odom" >
+  </node>
 
-  <node pkg="rosserial_python" name="serial_node" type="serial_node.py" output="screen"
+
+
+  <node pkg="rosserial_python" name="serial_node_ros" type="serial_node.py" output="screen"
        args="/dev/ttyUSB0" >
   </node>
+  <node pkg="rosserial_python" name="serial_node_extended" type="serial_node.py" output="screen"
+       args="/dev/ttyACM0" >
+  </node>
+
 </launch>

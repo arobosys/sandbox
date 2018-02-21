@@ -2,7 +2,7 @@
 # license removed for brevity
 import rospy
 from std_msgs.msg import String
-from malish.msg import NewTwist
+from malish.msg import NewTwist, Diode
 from sensor_msgs.msg import Joy
 from math import atan2,pi,sqrt
 from geometry_msgs.msg import Twist
@@ -28,7 +28,7 @@ t2.angle_vel = 0.0;
 flag_no_cmd = False;
 
 def callback(data):
-    global pub, t1, flag_no_cmd
+    global pub, t1, flag_no_cmd, pub_lift
 
     #Dead zone constant
     thresh = 0.15
@@ -48,11 +48,14 @@ def callback(data):
     left_turn = data.axes[4]#2]
     right_turn = data.axes[5]#5]
 
+    if
+
     #Dead zone logick
     if lr < thresh and lr > -thresh:
         lr = 0
     if ud < thresh and ud > -thresh:
         ud = 0
+    
 
     #Dead zone turn
     turn = left_turn - right_turn
@@ -74,11 +77,14 @@ def vel_callback(msg):
     t2.angle_vel = vel_msg.angular.z
 
 def talker():
-    global pub, t1, t2, flag_no_cmd
+    global pub, t1, t2, flag_no_cmd, pub_lift
     rospy.init_node('twist_joy')
     pub = rospy.Publisher('/twist/command', NewTwist, queue_size=10)
+    pub_lift = rospy.Publisher('/led', Diode , queue_size=10)
+
     rospy.Subscriber("/joy", Joy, callback)
     rospy.Subscriber("/cmd_vel", Twist, vel_callback)
+
     rate = rospy.Rate(100) # 100hz
     print flag_no_cmd,"flag value"
 
