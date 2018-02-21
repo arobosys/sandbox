@@ -114,7 +114,7 @@ public:
 #ifdef __ODOM_BROADCASTER
         odom.header.frame_id = "odom";
 #else
-        odom.header.frame_id = "base_link";
+        odom.header.frame_id = "map";
 #endif
 
         //set the position
