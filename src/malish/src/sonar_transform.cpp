@@ -19,6 +19,7 @@
 
 // Consecutively increasing sequence ID.
 static uint32_t sonar_seq[4] = {0};
+static const float scale = 100.0;
 
 class SonarTransform {
 public:;
@@ -34,35 +35,35 @@ public:;
 
         std_sonar_msg.radiation_type = 0;
         std_sonar_msg.field_of_view = 0.2618;
-        std_sonar_msg.min_range = 0.05;
-        std_sonar_msg.max_range = 0.8;
+        std_sonar_msg.min_range = 0.01;
+        std_sonar_msg.max_range = 1.03;
     }
-
+  
     // Publish as std Sonar sensor message.
     void arduSonarCallback (const malish::ArduSonar& ardu_sonar) {
         // Left
         std_sonar_msg.header.seq = ++sonar_seq[0];
         std_sonar_msg.header.stamp = ardu_sonar.timestamp;
         std_sonar_msg.header.frame_id = leftSonarFrame;
-        std_sonar_msg.range = ardu_sonar.sonLeft;
+        std_sonar_msg.range = ardu_sonar.sonLeft / scale;
         std_sonar_left_pub_.publish(std_sonar_msg);
         // Right
         std_sonar_msg.header.seq = ++sonar_seq[1];
         std_sonar_msg.header.stamp = ardu_sonar.timestamp;
         std_sonar_msg.header.frame_id = rightSonarFrame;
-        std_sonar_msg.range = ardu_sonar.sonRight;
+        std_sonar_msg.range = ardu_sonar.sonRight / scale;
         std_sonar_right_pub_.publish(std_sonar_msg);
         // Front
         std_sonar_msg.header.seq = ++sonar_seq[2];
         std_sonar_msg.header.stamp = ardu_sonar.timestamp;
         std_sonar_msg.header.frame_id = frontSonarFrame;
-        std_sonar_msg.range = ardu_sonar.sonFront;
+        std_sonar_msg.range = ardu_sonar.sonFront / scale;
         std_sonar_front_pub_.publish(std_sonar_msg);
         // Rear
         std_sonar_msg.header.seq = ++sonar_seq[3];
         std_sonar_msg.header.stamp = ardu_sonar.timestamp;
         std_sonar_msg.header.frame_id = rearSonarFrame;
-        std_sonar_msg.range = ardu_sonar.sonRear;
+        std_sonar_msg.range = ardu_sonar.sonRear / scale;
         std_sonar_rear_pub_.publish(std_sonar_msg);
     }
 
