@@ -102,6 +102,13 @@
                                         false,  false, false,
                                         false, false, false,
                                         false, false, false]</rosparam>
+					
+        <param name="odom1" value="/omni/odom"/>
+        <rosparam param="odom1_config">[false, false, false,
+                                        false, false, true,
+                                        true,  true, false,
+                                        false, false, true,
+                                        false, false, false]</rosparam>
 
         <param name="imu0" value="/imu/transform"/>
         <rosparam param="imu0_config">[false, false, false,
@@ -116,9 +123,9 @@
     <node pkg="tf" type="static_transform_publisher" name="base_link_camera_link" args="0.28 0 0.35 0 0 0 base_link camera_link 20"/>
     <node pkg="tf" type="static_transform_publisher" name="camera_link_zed_center" args="0 0 0 0 0 0 camera_link zed_center 20"/>
     <node pkg="tf" type="static_transform_publisher" name="base_link_imu" args="0 0 0 0 0 3.14 base_link imu 20"/>
-    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_left" args="0 0.15 0 1.57 0 0 base_link sonar_left 20"/>
-    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_right" args="0 -0.15 0 4.71 0 0 base_link sonar_right 20"/>
-    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_rear" args="-0.32 0 0 3.14 0 0 base_link sonar_rear 20"/>
-    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_front" args="0.32 0 0 0 0 0 base_link sonar_front 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_left" args="0 0.15 0.16 1.57 0 0 base_link sonar_left 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_right" args="0 -0.15 0.16 4.71 0 0 base_link sonar_right 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_rear" args="-0.32 0 0.16 3.14 0 0 base_link sonar_rear 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_front" args="0.32 0 0.16 0 0 0 base_link sonar_front 20"/>
 
 </launch>
