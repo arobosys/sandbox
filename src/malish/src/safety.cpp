@@ -51,17 +51,22 @@ class safety {
   // Analyze part of map and search largest obstacle
   void mapCallback (const nav_msgs::OccupancyGrid& map) {
       //Convert map to openCV
-      std::vector<int> Vf;
-      Mat image = Mat(map.info.width, map.info.width, CV_8UC1);
-      memcpy(image.data, Vf.data(), Vf.size()*sizeof(int));
+      std::vector<int8_t> Vf;
+
+      Mat image = Mat(map.info.width, map.info.height, CV_8UC1, *map.data.data());
+      //memcpy(image.data, Vf.data(), Vf.size()*sizeof(int));
 
       //Use openCV to find contours on map.
       std::vector<std::vector<cv::Point>> contours;
       std::vector<Vec4i> hierarchy;
       cv::findContours(image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-      std::stringstream ss;
-      ss << contours.size();
 
+
+      std::stringstream ss;
+      ss << "hello world " << contours.size();
+      ss.str();
+      std::string tmp = ss.str();
+      ROS_INFO("contours amount: %d", contours.size());
       //Extract largest contour.
       //Get the distance to largest contour.
 
