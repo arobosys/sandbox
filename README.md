@@ -1,3 +1,1 @@
-# malish
-Репо по минироботу
-Добавлена тестовая ветвь.
+# Omniwheels malish robot

@@ -1,0 +1,7 @@
+<library path="lib/libsync_odometry">
+    <class name="buggy_2dnav/SyncOdometryNodelet" type="buggy_2dnav::SyncOdometryNodelet" base_class_type="nodelet::Nodelet">
+        <description>
+            This is sync nodelet.
+        </description>
+    </class>
+</library>

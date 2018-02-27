@@ -1,0 +1,39 @@
+<launch>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find buggy_2dnav)/cfg/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find buggy_2dnav)/cfg/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find buggy_2dnav)/cfg/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find buggy_2dnav)/cfg/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find buggy_2dnav)/cfg/eband_local_planner_params.yaml" command="load" />
+
+    <param name="base_global_planner" value="global_planner/GlobalPlanner" />
+    <param name="planner_frequency" value="1.0" />
+    <param name="planner_patience" value="5.0" />
+
+    <param name="base_local_planner" value="eband_local_planner/EBandPlannerROS" />
+    <param name="controller_frequency" value="15.0" />
+    <param name="controller_patience" value="15.0" />
+
+    <param name="clearing_rotation_allowed" value="false" /> <!-- Our carlike robot is not able to rotate in place -->
+  </node>
+
+  <!-- -Send four goals- -->
+  <param name="num_goal" value="4" />   
+  <param name="goal1_x" value="1.7" />
+  <param name="goal1_y" value="0" />
+  <param name="goal1_theta" value="90" />
+  <param name="goal2_x" value="1.7" />
+  <param name="goal2_y" value="1.34" />
+  <param name="goal2_theta" value="180" />
+  <param name="goal3_x" value="0" />
+  <param name="goal3_y" value="1.34" />
+  <param name="goal3_theta" value="-90" />
+  <param name="goal4_x" value="0" />
+  <param name="goal4_y" value="0" />
+  <param name="goal4_theta" value="0" />
+  <node pkg="buggy_2dnav" type="send_goals" name="send_goals" output="screen" />
+  
+</launch>
+
+
