@@ -1,27 +1,24 @@
-Репо по использованию пакета AVIS
+# Репо по пакету AVIS
 
 ## Запуск программы в логическом уровне
-## Я перенес файл kernel.launch от /home/zhuhua/AGRO/avis2/kernel/launch 
-## до /home/zhuhua/AGRO/avis2/kernel/src/logic_layer/launch
-------------------------------------------------------------------------
-'''bash
+* Я перенес файл kernel.launch от /home/zhuhua/AGRO/avis2/kernel/launch 
+* до /home/zhuhua/AGRO/avis2/kernel/src/logic_layer/launch
+```bash
  cd AGRO/avis2/kernel/
  source devel/setup.bash 
  export AVIS_ROOT=/home/zhuhua/AGRO/avis2
  roslaunch logic_layer kernel.launch
-'''
-------------------------------------------------------------------------
+```
+
 
 ## Опубликовать топик /CI_INput
-------------------------------------------------------------------------
-'''bash
+```bash
 rostopic pub  /CI_input std_msgs/String "start Exhibition 7 5"
-'''
-------------------------------------------------------------------------
+```
+
 
 ## Информации на экране
-------------------------------------------------------------------------
-'''bash
+```bash
 [ INFO] [1519721394.635069591]: scenario_executor_server started!
 [ INFO] [1519721394.644173179]: TechmapServer started
 [ INFO] [1519721394.646625787]: RosLinkServer started
@@ -63,8 +60,8 @@ rostopic pub  /CI_input std_msgs/String "start Exhibition 7 5"
 TurnTrajCalculator error: "tf_map" passed to lookupTransform argument target_frame does not exist. 
 . Please retry. Transforms from goal will be applied[ INFO] [1519721408.449164727]: Trajectory published
 [ INFO] [1519721408.455874803]: Got goal with delta = 1.000000
-'''
---------------------------------------------------------------------------------------------------------
+```
+
 
 
 
