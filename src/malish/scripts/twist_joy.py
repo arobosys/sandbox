@@ -25,12 +25,17 @@ t2.linear_vel = 0;
 t2.orient = 0.0;
 t2.angle_vel = 0.0;
 
+lift_msg = Diode()
+lift_msg.dio1 = False;
+lift_msg.dio2 = False;
+lift_msg.dio3 = False;
+
 flag_no_cmd = False;
 
 lift = False;
 
 def callback(data):
-    global pub, t1, flag_no_cmd, pub_lift
+    global pub, t1, flag_no_cmd, pub_lift, lift_msg
 
     #Dead zone constant
     thresh = 0.15
@@ -52,7 +57,6 @@ def callback(data):
     left_turn = data.axes[4]#2]
     right_turn = data.axes[5]#5]
 
-    lift_msg = Diode()
     if (lifter==1) and (unlifter!=1):
         lift_msg.dio1 = True
         lift_msg.dio2 = False
@@ -62,7 +66,18 @@ def callback(data):
         lift_msg.dio1 = False
         lift_msg.dio2 = True
         lift_msg.dio3 = True
-    
+
+    if (lifter!=1) and (unlifter!=1):
+        lift_msg.dio1 = False
+        lift_msg.dio2 = False
+        lift_msg.dio3 = False
+
+    if (lifter==1) and (unlifter==1):
+        lift_msg.dio1 = False
+        lift_msg.dio2 = False
+        lift_msg.dio3 = False
+        
+        
     #Dead zone logick
     if lr < thresh and lr > -thresh:
         lr = 0
@@ -79,7 +94,6 @@ def callback(data):
     t1.angle_vel = throttle * turn * norm_angle_vel 
 	
     #pub.publish(t1)
-    pub_lift.publish(lift_msg)
 
 def vel_callback(msg):
     global vel_msg, t2
@@ -90,7 +104,7 @@ def vel_callback(msg):
     t2.angle_vel = vel_msg.angular.z
 
 def talker():
-    global pub, t1, t2, flag_no_cmd, pub_lift
+    global pub, t1, t2, flag_no_cmd, pub_lift, lift_msg
     rospy.init_node('twist_joy')
     pub = rospy.Publisher('/twist/command', NewTwist, queue_size=10)
     pub_lift = rospy.Publisher('/led', Diode , queue_size=10)
@@ -101,6 +115,7 @@ def talker():
     rate = rospy.Rate(100) # 100hz
 
     while not rospy.is_shutdown():
+        pub_lift.publish(lift_msg)
         if flag_no_cmd:
             pub.publish(t2)
         else:
