@@ -1,0 +1,8 @@
+{
+	"command": {
+      "name": "signal",
+      "args": {
+        "sigcode": "terminate"
+      }
+    }
+}
