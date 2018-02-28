@@ -27,15 +27,15 @@ cv::RNG rng(12345);
 //
 static uint32_t seq_safety = 0;
 /// Map frames per second, Hz.
-static const float MFPS = 6;
+static const float MFPS = 6.0;
 /// Robot's width, meters.
 static const float robot_width = 0.45;
 /// Robot's length, meters.
 static const float robot_length = 0.65;
 /// Margin of safety vicinity, meters.
-static const float margin = 1;
+static const float margin = 1.0;
 /// Minimal blob area to consider it as obstacle, [pixels].
-static const float min_blob_area = 10;
+static const float min_blob_area = 3.0;
 
 // typedef std::vector<cv::Point2f> cvContour;
 typedef std::vector<cv::Point> cvContour;
@@ -93,14 +93,14 @@ class Safety {
         // Init messages.
         safety_msg_.alert = false;
 
-        safety_msg_.pos.orientation.w = 0;
-        safety_msg_.pos.orientation.x = 0;
-        safety_msg_.pos.orientation.y = 0;
-        safety_msg_.pos.orientation.z = 0;
+        safety_msg_.pos.orientation.w = 0.0;
+        safety_msg_.pos.orientation.x = 0.0;
+        safety_msg_.pos.orientation.y = 0.0;
+        safety_msg_.pos.orientation.z = 0.0;
 
-        safety_msg_.pos.position.x = 0;
-        safety_msg_.pos.position.y = 0;
-        safety_msg_.pos.position.z = 0;
+        safety_msg_.pos.position.x = 0.0;
+        safety_msg_.pos.position.y = 0.0;
+        safety_msg_.pos.position.z = 0.0;
     }
 
   /// Takes map from rtab_map's message.
@@ -130,12 +130,15 @@ class Safety {
       float robo_x = ( - map_info.origin.position.x + odom.pose.pose.position.x) / map_info.resolution;
       float robo_y = ( - map_info.origin.position.y + odom.pose.pose.position.y) / map_info.resolution;
 
+      ROS_INFO("robo_x: %f, robo_y: %f", robo_x, robo_y);
+
       // Render robot and vicinity into map's sized image.
       // Binary image with robot.
       cv::Mat tmp_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
       cv::Mat intersect_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
 
       int radius = static_cast<int>((robot_length / 2.0 + margin) / map_info.resolution);
+      ROS_INFO("Robot safety zone radius: %d", radius);
       cv::Scalar color = cv::Scalar(1, 1, 1);
       // Draw filled circle of safety vicinity.
       cv::circle(tmp_img, cv::Point(robo_y, robo_x), radius, color, -1, 8);
@@ -158,7 +161,7 @@ class Safety {
       // Find contours on intersection map.
       std::vector<cvContour> contours;
       std::vector<cv::Vec4i> hierarchy;
-      cv::findContours(tmp_img, contours, hierarchy, cv::RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
+      cv::findContours(intersect_img, contours, hierarchy, cv::RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
 
       // Draw contours
       /* cv::Mat drawing = cv::Mat::zeros(map_image.size(), CV_8UC3);
@@ -168,32 +171,41 @@ class Safety {
       } */
 
       // Analyse obstacles. Find blob with maximal area.
-      float max_blob_area = 0;
+      float max_blob_area = 0.0;
       cvContour best_contour;
-      for(int i = 0; i < contours.size(); i++) {
+      for(unsigned int i = 0; i < contours.size(); i++) {
           if(cv::contourArea(contours[i]) > max_blob_area) {
               max_blob_area = cv::contourArea(contours[i]);
               best_contour = contours[i];
           }
       }
 
+      ROS_INFO("max_blob_area: %f", max_blob_area);
+
       // Send alarm message in case of obstacle occurrence.
       if(max_blob_area > min_blob_area) {
-          // Find center of blob.
-          cv::Point2f center_blob = center_by_moments(best_contour);
+          // Find center of blob in map's SC.
+          // cv::Point2f center_blob = center_by_moments(best_contour);
+          cv::Point2f center_blob;
+          float blob_radius;
+          minEnclosingCircle(best_contour, center_blob, blob_radius);
+          center_blob = center_blob / map_info.resolution;
 
-          ROS_INFO("center_blob_x: %f, center_blob_y: %f", center_blob.x, center_blob.y);
-          ROS_INFO("max_blob_area: %f", max_blob_area);
+          ROS_INFO("center_blob.x: %f, center_blob.y: %f", center_blob.x, center_blob.y);
 
           // Fill out safety message form.
           safety_msg_.alert = true;
 
-          float angle = atan2(center_blob.y, center_blob.x);
+          // Angle between robot and obstacle.
+          float angle = atan2(center_blob.y - robo_y, center_blob.x - robo_x);
+          ROS_INFO("angle = %f", angle * 180 / 3.14);
           tf::Quaternion q_tf;
 
-          tf::Matrix3x3 obs_mat;
-          obs_mat.setEulerYPR(angle, 0, 0);
-          obs_mat.getRotation(q_tf);
+          q_tf = tf::createQuaternionFromRPY(angle, 0.0, 0.0);
+
+          /* tf::Matrix3x3 obs_mat;
+          obs_mat.setEulerYPR(angle, 0.0, 0.0);
+          obs_mat.getRotation(q_tf); */
 
           safety_msg_.pos.orientation.w = q_tf.getW();
           safety_msg_.pos.orientation.x = q_tf.getX();
@@ -202,7 +214,23 @@ class Safety {
 
           safety_msg_.pos.position.x = center_blob.x;
           safety_msg_.pos.position.y = center_blob.y;
-          safety_msg_.pos.position.z = 0;
+          safety_msg_.pos.position.z = 0.0;
+
+          // Publish safety alarm message.
+          safety_pub_.publish(safety_msg_);
+      }
+      else if(safety_msg_.alert == true) {
+          // Reset message.
+          safety_msg_.alert = false;
+
+          safety_msg_.pos.orientation.w = 0.0;
+          safety_msg_.pos.orientation.x = 0.0;
+          safety_msg_.pos.orientation.y = 0.0;
+          safety_msg_.pos.orientation.z = 0.0;
+
+          safety_msg_.pos.position.x = 0.0;
+          safety_msg_.pos.position.y = 0.0;
+          safety_msg_.pos.position.z = 0.0;
 
           // Publish safety alarm message.
           safety_pub_.publish(safety_msg_);
