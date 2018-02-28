@@ -1,0 +1,9 @@
+#goal definition
+int32 ID
+LL_Params[] params
+---
+#result definition
+string state
+---
+#feedback
+string stateLLL

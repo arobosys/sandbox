@@ -1,0 +1,8 @@
+#goal definition
+string text
+---
+#result definition
+string answer
+---
+#feedback
+#empty

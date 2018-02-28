@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>command_interpreter</name>
+  <version>0.0.0</version>
+  <description>The command_interpreter package</description>
+  <maintainer email="svetozar@todo.todo">svetozar</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>core_msgs</build_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>core_msgs</run_depend>
+</package>
