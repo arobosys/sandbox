@@ -21,6 +21,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/opencv.hpp"
 
+#define __DEBUG__ 1
 
 // Random generator.
 cv::RNG rng(12345);
@@ -33,9 +34,9 @@ static const float robot_width = 0.45;
 /// Robot's length, meters.
 static const float robot_length = 0.65;
 /// Margin of safety vicinity, meters.
-static const float margin = 1.0;
+static const float margin = 1.25;
 /// Minimal blob area to consider it as obstacle, [pixels].
-static const float min_blob_area = 3.0;
+static const float min_blob_area = 2.0;
 
 // typedef std::vector<cv::Point2f> cvContour;
 typedef std::vector<cv::Point> cvContour;
@@ -59,15 +60,30 @@ cv::Point2f center_by_moments(cvContour const& cnt) {
 }
 
 /*
- * Converter.
- * @param mat
- * @param map
+ * Number of nonzero pixels in image.
+ */
+double blob_area(cv::Mat const& img) {
+    double area = 0.0;
+    for(unsigned int i = 0; i < img.rows; ++i) {
+        for (unsigned int j = 0; j < img.cols; ++j) {
+            if(img.at<uchar>(j, i) > 0.0)
+                area += 1.0;
+        }
+    }
+    return area;
+}
+
+/*
+ * Converter map to mat.
+ *
+ * @param mat output cv::Mat;
+ * @param map input nav_msgs::OccupancyGrid.map.
  */
 void map_to_mat(cv::Mat & mat, nav_msgs::OccupancyGrid const& map) {
     for(unsigned int i = 0; i < map.info.height; ++i) {
         for(unsigned int j = 0; j < map.info.width; ++j) {
-            // Convert from int8 to uchar(grayscale image).
-            mat.at<uchar>(j, i) = static_cast<uchar> (map.data[i * map.info.width + j]) + 1;
+            // Convert from int8 to uchar (grayscale image).
+            mat.at<uchar>(j, i) = static_cast<uchar>(map.data[i * map.info.width + j]) + 1;
         }
     }
 
@@ -115,72 +131,121 @@ class Safety {
       map_image = cv::Mat(map.info.width, map.info.height, CV_8UC1);
       map_to_mat(map_image, map);
 
+      // Binarization.
       cv::threshold(map_image, map_image, 2, 1, CV_THRESH_BINARY);
 
-      // Show in a window.
-      cv::namedWindow( "image", CV_WINDOW_NORMAL);
-      cv::imshow("image", map_image * 255);
-      if(cv::waitKey(1000.0 / MFPS) == 27)
-          return;
+      if(__DEBUG__) {
+          // Show in a window.
+          cv::namedWindow("image", CV_WINDOW_NORMAL);
+          cv::imshow("image", map_image * 255);
+          if (cv::waitKey(1000.0 / MFPS) == 27)
+              return;
+          ROS_INFO("map_info.resolution %f", map_info.resolution);
+      }
   }
 
-  /// Takes odometry data and analyze robot's safety zone on obstacle invasion.
+  /// Takes odometry data and analyzes robot's safety zone on obstacle occurrence.
   void odomCallback (const nav_msgs::Odometry & odom) {
-      // Check, how close is robot to an obstacle.
-      float robo_x = ( - map_info.origin.position.x + odom.pose.pose.position.x) / map_info.resolution;
-      float robo_y = ( - map_info.origin.position.y + odom.pose.pose.position.y) / map_info.resolution;
+      // Robot coordinate in map's SC.
+      float robo_x = (-map_info.origin.position.x + odom.pose.pose.position.x) / map_info.resolution;
+      float robo_y = (-map_info.origin.position.y + odom.pose.pose.position.y) / map_info.resolution;
+      ROS_INFO_COND(__DEBUG__ > 0, "robo_x: %f, robo_y: %f", robo_x, robo_y);
 
-      ROS_INFO("robo_x: %f, robo_y: %f", robo_x, robo_y);
-
-      // Render robot and vicinity into map's sized image.
-      // Binary image with robot.
+      // Render robot and vicinity into image with map's size.
+      // Binary image with robot and safety vicinity.
       cv::Mat tmp_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
-      cv::Mat intersect_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
 
       int radius = static_cast<int>((robot_length / 2.0 + margin) / map_info.resolution);
-      ROS_INFO("Robot safety zone radius: %d", radius);
+      ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
+
       cv::Scalar color = cv::Scalar(1, 1, 1);
       // Draw filled circle of safety vicinity.
       cv::circle(tmp_img, cv::Point(robo_y, robo_x), radius, color, -1, 8);
 
-      // Show in a window.
-      cv::namedWindow( "Robot", CV_WINDOW_NORMAL);
-      cv::imshow("Robot", tmp_img * 255);
-      if(cv::waitKey(1000.0 / MFPS) == 27)
-          return;
+      if (__DEBUG__) {
+          // Show in a window.
+          cv::namedWindow("Robot", CV_WINDOW_NORMAL);
+          cv::imshow("Robot", tmp_img * 255);
+          if (cv::waitKey(1000.0 / MFPS) == 27)
+              return;
+      }
 
       // Find intersection map.
+      cv::Mat intersect_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
       cv::bitwise_and(tmp_img, map_image, intersect_img);
 
-      // Show in a window.
-      cv::namedWindow( "Intersection", CV_WINDOW_NORMAL);
-      cv::imshow("Intersection", intersect_img * 255);
-      if(cv::waitKey(1000.0 / MFPS) == 27)
-          return;
+      if (__DEBUG__) {
+          // Show in a window.
+          cv::namedWindow("Intersection", CV_WINDOW_NORMAL);
+          cv::imshow("Intersection", intersect_img * 255);
+          if (cv::waitKey(1000.0 / MFPS) == 27)
+              return;
+      }
 
       // Find contours on intersection map.
       std::vector<cvContour> contours;
       std::vector<cv::Vec4i> hierarchy;
-      cv::findContours(intersect_img, contours, hierarchy, cv::RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
+      cv::findContours(intersect_img, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(1,1));
 
       // Draw contours
-      /* cv::Mat drawing = cv::Mat::zeros(map_image.size(), CV_8UC3);
+      cv::Mat drawing = cv::Mat::zeros(map_image.size(), CV_8UC3);
       for(int i = 0; i < contours.size(); i++) {
           cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-          cv::drawContours(drawing, contours, i, color, 2, 8, hierarchy, 0, cv::Point());
-      } */
+          cv::drawContours(drawing, contours, i, color, -1, 8, hierarchy, 0, cv::Point(1,1));
+      }
+
+      if (__DEBUG__) {
+          // Show in a window.
+          cv::namedWindow("Intersection", CV_WINDOW_NORMAL);
+          cv::imshow("Intersection", drawing);
+          if (cv::waitKey(1000.0 / MFPS) == 27)
+              return;
+      }
 
       // Analyse obstacles. Find blob with maximal area.
-      float max_blob_area = 0.0;
+      double max_blob_area = 0.0;
       cvContour best_contour;
+
       for(unsigned int i = 0; i < contours.size(); i++) {
-          if(cv::contourArea(contours[i]) > max_blob_area) {
-              max_blob_area = cv::contourArea(contours[i]);
+          cvContour approx;
+          cv::approxPolyDP(contours[i], approx, 1, true);
+          double area1 = cv::contourArea(approx);
+
+          double area = cv::contourArea(contours[i]);
+
+          area = area > area1 ? area : area1;
+
+          // cv::Mat obstacles = cv::Mat::zeros(map_image.size(), CV_8UC3);
+          // cv::Scalar color = cv::Scalar(1, 1, 1);
+          // cv::drawContours(obstacles, contours[i], 0, color, CV_FILLED);
+
+          // Show in a window.
+          // cv::namedWindow( "obstacles", CV_WINDOW_NORMAL);
+          // cv::imshow("obstacles", obstacles * 255);
+          // if(cv::waitKey(1000.0 / MFPS) == 27)
+              // return;
+
+          // cv::Mat obstacles_bw = cv::Mat::zeros(map_image.size(), CV_8UC1);
+          // cv::threshold(obstacles, obstacles_bw, 0.5, 1, CV_THRESH_BINARY);
+          double area2 = blob_area(intersect_img);
+
+          ROS_INFO_COND(__DEBUG__ > 0, "area = %f, area1 = %f, area2 = %f, approx poly vertices = %d", area, area1, area2, approx.size());
+
+          area = area > area2 ? area : area2;
+
+          // Show in a window.
+          // cv::namedWindow( "maxObsatcle", CV_WINDOW_NORMAL);
+          // cv::imshow("maxObsatcle", obstacles * 255);
+          // if(cv::waitKey(1000.0 / MFPS) == 27)
+             // return;
+
+          if(area > max_blob_area) {
+              max_blob_area = area;
               best_contour = contours[i];
           }
       }
 
-      ROS_INFO("max_blob_area: %f", max_blob_area);
+      ROS_INFO_COND(__DEBUG__ > 0, "max_blob_area: %f", max_blob_area);
 
       // Send alarm message in case of obstacle occurrence.
       if(max_blob_area > min_blob_area) {
@@ -189,31 +254,26 @@ class Safety {
           cv::Point2f center_blob;
           float blob_radius;
           minEnclosingCircle(best_contour, center_blob, blob_radius);
-          center_blob = center_blob / map_info.resolution;
+          center_blob = center_blob;
 
-          ROS_INFO("center_blob.x: %f, center_blob.y: %f", center_blob.x, center_blob.y);
+          ROS_INFO_COND(__DEBUG__ > 0, "center_blob.x: %f, center_blob.y: %f", center_blob.x, center_blob.y);
 
           // Fill out safety message form.
           safety_msg_.alert = true;
 
           // Angle between robot and obstacle.
           float angle = atan2(center_blob.y - robo_y, center_blob.x - robo_x);
-          ROS_INFO("angle = %f", angle * 180 / 3.14);
+          ROS_INFO_COND(__DEBUG__ > 0, "angle = %f", angle * 180 / 3.14);
           tf::Quaternion q_tf;
-
           q_tf = tf::createQuaternionFromRPY(angle, 0.0, 0.0);
-
-          /* tf::Matrix3x3 obs_mat;
-          obs_mat.setEulerYPR(angle, 0.0, 0.0);
-          obs_mat.getRotation(q_tf); */
 
           safety_msg_.pos.orientation.w = q_tf.getW();
           safety_msg_.pos.orientation.x = q_tf.getX();
           safety_msg_.pos.orientation.y = q_tf.getY();
           safety_msg_.pos.orientation.z = q_tf.getZ();
 
-          safety_msg_.pos.position.x = center_blob.x;
-          safety_msg_.pos.position.y = center_blob.y;
+          safety_msg_.pos.position.x = (center_blob.x - robo_x) * map_info.resolution;
+          safety_msg_.pos.position.y = (center_blob.y - robo_y) * map_info.resolution;
           safety_msg_.pos.position.z = 0.0;
 
           // Publish safety alarm message.
