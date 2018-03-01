@@ -17,6 +17,8 @@
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
   
+  <build_depend>process_interface</build_depend>
+  <run_depend>process_interface</run_depend>
   <export>
    
   </export>

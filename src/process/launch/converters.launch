@@ -1,5 +1,0 @@
-<launch>
-  <!--node name="gazebo_speed" pkg="gazebo_speed" type="gazebo_speed" /-->
-  <node name="cvt_laserscan" pkg="cvt_laserscan" type="cvt_laserscan"
-  args="-l /gazebo/default/irobot_lidar/hokuyo/link/laser/scan" />
-</launch>
