@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   process_interface
-  options_tool
 )
 
 catkin_package()
