@@ -22,6 +22,7 @@ add_message_files(
   Diode.msg
   Vector3_32.msg
   ArduImu.msg
+  Obstacle.msg
 )
 generate_messages(
   DEPENDENCIES
@@ -35,6 +36,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+find_package( OpenCV REQUIRED )
+
+IF(NOT OpenCV_FOUND)
+    MESSAGE(FATAL_ERROR "OpenCV not found")
+ENDIF()
+set(OpenCV_LIBS opencv_core opencv_imgproc)
+
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+
 add_executable(omni_odom src/omni_odom.cpp)
 target_link_libraries(omni_odom ${catkin_LIBRARIES})
 add_dependencies(omni_odom malish_generate_messages_cpp)
@@ -46,3 +56,8 @@ add_dependencies(imu_transform malish_generate_messages_cpp)
 add_executable(sonar_transform src/sonar_transform.cpp)
 target_link_libraries(sonar_transform ${catkin_LIBRARIES})
 add_dependencies(sonar_transform malish_generate_messages_cpp)
+
+
+add_executable(safety src/safety.cpp)
+target_link_libraries(safety ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(safety malish_generate_messages_cpp)
