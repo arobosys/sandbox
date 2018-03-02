@@ -4,15 +4,9 @@
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
 
-    //MoveBaseClient ac("move_base", true);
-
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
-                                                                     std::bind(&GoalSender::goalCallback, this,
-                                                                               std::placeholders::_1),
-                                                                     std::bind(&GoalSender::preemtCallback,
-                                                                               this));
-
-    ROS_INFO("goal_sender_callback  is set");
+                       std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
+                       std::bind(&GoalSender::preemtCallback,this));
 
     rosLinkClientPtr->listen();
 }
@@ -45,25 +39,25 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
     goalToMove[0][0]=goal[0];
     goalToMove[0][1]=goal[1];
     goalToMove[0][2]=goal[2];
-    //goal1=goalTransform(goal[1],goal[2],goal[3]);
+
     goal = splitByDelimiter<double>(goal2_string, ';');
     ROS_INFO("From logic layer I get 2d_goal2: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[1][0]=goal[0];
     goalToMove[1][1]=goal[1];
     goalToMove[1][2]=goal[2];
-    //goal2=goalTransform(goal[1],goal[2],goal[3]);
+
     goal = splitByDelimiter<double>(goal3_string, ';');
     ROS_INFO("From logic layer I get 2d_goal3: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[2][0]=goal[0];
     goalToMove[2][1]=goal[1];
     goalToMove[2][2]=goal[2];
-    //goal3=goalTransform(goal[1],goal[2],goal[3]);
+
     goal = splitByDelimiter<double>(goal4_string, ';');
     ROS_INFO("From logic layer I get 2d_goal4: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[3][0]=goal[0];
     goalToMove[3][1]=goal[1];
     goalToMove[3][2]=goal[2];
-    //goal4=goalTransform(goal[1],goal[2],goal[3]);
+
 
     //tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
@@ -103,56 +97,9 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
     }
 
 }
-/*
-move_base_msgs::MoveBaseGoal goalTransform(double x,double y,double theta)
+
+void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &params)
 {
-    move_base_msgs::MoveBaseGoal goal;
-
-    goal.target_pose.header.frame_id = "map";
-    goal.target_pose.header.stamp = ros::Time::now();
-
-    goal.target_pose.pose.position.x = x;
-    goal.target_pose.pose.position.y = y;
-
-    double radians=theta*(3.1415916/180);
-    tf::Quaternion quaternion;
-    quaternion = tf::createQuaternionFromYaw(radians);
-    geometry_msgs::Quaternion qMsg;
-    tf::quaternionTFToMsg(quaternion,qMsg);
-    goal.target_pose.pose.orientation= qMsg;
-
-    return goal;
-}
-
-bool publishGoal(move_base_msgs::MoveBaseGoal goal)
-{
-    MoveBaseClient ac("move_base", true);
-    //wait for the action server to come up
-    while(!ac.waitForServer(ros::Duration(10.0))){
-        ROS_INFO("Waiting for the move_base action server to come up");
-    }
-
-
-    ROS_INFO("Sending goal");
-    ac.sendGoal(goal);
-
-    ac.waitForResult();
-
-    if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_INFO("Malish, the robot moved to goal");
-        return true;
-    }
-    else
-    {
-        ROS_INFO("The robot failed to move to goal for some reason");
-        return false;
-    }
-}
- */
-
-void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &params) {
-    ROS_INFO("goal_sender_node is working");
     auto data = params.key_value;
     std::map<std::string, std::string> keyToValue;
     for (const auto &a : data) {
@@ -161,12 +108,6 @@ void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &par
     num_goal = std::stod(keyToValue[NUM_GOAL]);
     ROS_INFO("The number of goal = %d", num_goal);
     parseTransforms(keyToValue);
-/*
-    publishGoal(goal1);
-    publishGoal(goal2);
-    publishGoal(goal3);
-    publishGoal(goal4);
-*/
 }
 
 void GoalSender::preemtCallback() {}

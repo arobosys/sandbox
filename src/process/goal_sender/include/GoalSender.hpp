@@ -19,12 +19,6 @@ class GoalSender {
 
     int num_goal=4;
 
-    //move_base_msgs::MoveBaseGoal goal1,goal2,goal3,goal4;
-
-    //typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
-
-    //MoveBaseClient ac;
-
     std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
 
     void goalCallback(const interface::ProcessInterface::Parameters &params);
@@ -32,11 +26,6 @@ class GoalSender {
     void preemtCallback();
 
     void parseTransforms(const std::map<std::string, std::string> &keyToValue);
-
-
-    //void goalTransform(double x,double y,double theta,);
-
-    //bool publishGoal(move_base_msgs::MoveBaseGoal goal);
 
 
 public:
