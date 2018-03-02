@@ -10,6 +10,7 @@
 
 #include <ros.h>
 #include <malish/Diode.h>
+#include <malish/Lift.h>
 #include <malish/ArduSonar.h>
 #include <malish/ArduImu.h>
 #include <sensor_msgs/ChannelFloat32.h>
@@ -21,17 +22,21 @@
 // библиотека для работы с модулями IMU
 #include <TroykaIMU.h>
 
-#define G 9.80665F
+#define G (9.80665F)
 
 // Max active distance of sonars.
 static const int max_son_dist = 80;
 
 // Pin for audio device.
 int buzz = 6;
-// Pins for leds, debug.
+// Pins for leds, debug.actually - Lift pin
 int led1 = 51;
 int led2 = 53;
 int led3 = 8;
+
+int ledPinR = 12;    // RGB Светодиод
+int ledPinG = 11;    // RGB Светодиод
+int ledPinB = 10;    // RGB Светодиод
 
 bool dio1 = false;
 bool dio2 = false;
@@ -53,9 +58,9 @@ Accelerometer accel;
 Gyroscope gyro;
 
 /*
- * Activate diodes callback function (enable/disable).
+ * Activate lift callback function (enable/disable).
  */
-void callback( const malish::Diode& data){
+void callback( const malish::Lift& data){
     if (data.dio1&&data.dio2){
        dio1 = false;
        dio2 = false;
@@ -64,11 +69,19 @@ void callback( const malish::Diode& data){
       dio1 = data.dio1;
       dio2 = data.dio2;
     }
+    
     dio3 = data.dio3;
 }
 
+void callbackRGB( const malish::Diode& data){
+  analogWrite(ledPinR, data.red);
+  analogWrite(ledPinG, data.green);
+  analogWrite(ledPinB, data.blue);
+}
+
 ros::NodeHandle nh;
-ros::Subscriber<malish::Diode> sub("/led", &callback);
+ros::Subscriber<malish::Diode> sub_led("/led", &callbackRGB);
+ros::Subscriber<malish::Lift> sub("/lift", &callback);
 
 malish::ArduSonar son;
 ros::Publisher pub("/sonars", &son);
@@ -147,9 +160,17 @@ void setup() {
     pinMode(led1, OUTPUT);
     pinMode(led2, OUTPUT);
     pinMode(led3, OUTPUT);
+    pinMode(ledPinR, OUTPUT);
+    pinMode(ledPinG, OUTPUT);
+    pinMode(ledPinB, OUTPUT);
+    
+    analogWrite(ledPinR, 0);
+    analogWrite(ledPinG, 0);
+    analogWrite(ledPinB, 0);
     nh.initNode();
     nh.advertise(pub);
     nh.subscribe(sub);
+    nh.subscribe(sub_led);
     nh.advertise(imuPublisher);
     // Accelerometer initialization.
     accel.begin();

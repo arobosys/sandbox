@@ -22,6 +22,7 @@ add_message_files(
   Diode.msg
   Vector3_32.msg
   ArduImu.msg
+  Lift.msg	
 )
 generate_messages(
   DEPENDENCIES

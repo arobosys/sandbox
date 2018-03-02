@@ -1,3 +1,3 @@
-bool dio1
-bool dio2
-bool dio3 
+uint8 red
+uint8 green
+uint8 blue 
