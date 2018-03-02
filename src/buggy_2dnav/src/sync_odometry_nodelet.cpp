@@ -11,6 +11,23 @@
 #include <mutex>
 #include <thread>
 
+
+#ifdef __GNUC__
+#  include <features.h>
+#  if __GNUC_PREREQ(7,0)
+//      If  gcc_version >= 4.0
+typedef std::scoped_lock std_lock;
+#define GCC7
+#  elif __GNUC_PREREQ(3,2)
+//       If gcc_version >= 3.2
+typedef std::lock_guard<std::mutex> std_lock;
+#  else
+//       Else
+#  endif
+#else
+//    If not gcc
+#endif
+
 namespace buggy_2dnav {
 
     using namespace sensor_msgs;
@@ -38,17 +55,17 @@ namespace buggy_2dnav {
 
     public:
         void odomCallback(const OdometryPtr& odom) {
-            std::scoped_lock lock(odomMutex);
+            std_lock lock(odomMutex);
             lastOdom = odom;
         }
 
         void infoCallback(const CameraInfoConstPtr& info) {
-            std::scoped_lock lock(infoMutex);
+            std_lock lock(infoMutex);
             lastInfo = info;
         }
 
         void scanCallback(const LaserScanPtr& scan) {
-            std::scoped_lock lock(scanMutex);
+            std_lock lock(scanMutex);
             lastScan = scan;
         }
 
@@ -57,7 +74,13 @@ namespace buggy_2dnav {
 
             while (ros::ok()) {
                 {
+#ifdef GCC7
                     std::scoped_lock lock(odomMutex, infoMutex, scanMutex);
+#else
+                    std_lock lock1(odomMutex);
+                    std_lock lock2(infoMutex);
+                    std_lock lock3(scanMutex);
+#endif
                     if (lastInfo && lastOdom) {
                         lastOdom->header.stamp = lastInfo->header.stamp;
                         odomPub.publish(lastOdom);
