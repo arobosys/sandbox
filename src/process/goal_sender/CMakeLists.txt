@@ -8,6 +8,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   process_interface
+  geometry_msgs
+  tf
+  move_base_msgs
+  actionlib
 )
 
 catkin_package()
