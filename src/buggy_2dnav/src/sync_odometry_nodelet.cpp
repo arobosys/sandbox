@@ -13,17 +13,17 @@
 
 
 #ifdef __GNUC__
-#  include <features.h>
-#  if __GNUC_PREREQ(7,0)
-//      If  gcc_version >= 4.0
-typedef std::scoped_lock std_lock;
-#define GCC7
-#  elif __GNUC_PREREQ(3,2)
+#include <features.h>
+#if __GNUC_PREREQ(7,0)
+//      If  gcc_version >= 7.0
+typedef std::scoped_lock<std::mutex> std_lock;
+#define GCC7 1
+#elif __GNUC_PREREQ(3,2)
 //       If gcc_version >= 3.2
 typedef std::lock_guard<std::mutex> std_lock;
-#  else
+#else
 //       Else
-#  endif
+#endif
 #else
 //    If not gcc
 #endif
