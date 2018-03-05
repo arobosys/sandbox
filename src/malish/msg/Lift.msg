@@ -1,3 +1,2 @@
-bool dio1
-bool dio2
-bool dio3 
+bool up
+bool down
