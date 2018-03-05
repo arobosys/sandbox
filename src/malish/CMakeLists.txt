@@ -23,7 +23,7 @@ add_message_files(
   Vector3_32.msg
   ArduImu.msg
   Obstacle.msg
-  Lift.msg	
+  Lift.msg
 )
 generate_messages(
   DEPENDENCIES

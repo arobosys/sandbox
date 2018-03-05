@@ -9,6 +9,8 @@
   </node>
   <node pkg="malish" name="omni_odom" type="omni_odom" >
   </node>
+  <node pkg="malish" name="safety" type="safety" >
+  </node>
 
 
 

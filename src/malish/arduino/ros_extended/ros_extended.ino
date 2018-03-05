@@ -56,7 +56,12 @@ Ultrasonic ultrasonic4(trigPin[3], echoPin[3]);
 Accelerometer accel;
 // Creates object to work with gyroscope.
 Gyroscope gyro;
-
+void RGB_led(int r, int g, int b)
+{
+  analogWrite(ledPinR, r);
+  analogWrite(ledPinG, g);
+  analogWrite(ledPinB, b);
+}
 /*
  * Activate lift callback function (enable/disable).
  */
@@ -74,9 +79,7 @@ void callback( const malish::Lift& data){
 }
 
 void callbackRGB( const malish::Diode& data){
-  analogWrite(ledPinR, data.red);
-  analogWrite(ledPinG, data.green);
-  analogWrite(ledPinB, data.blue);
+  RGB_led(data.red, data.green, data.blue);
 }
 
 ros::NodeHandle nh;
@@ -164,9 +167,19 @@ void setup() {
     pinMode(ledPinG, OUTPUT);
     pinMode(ledPinB, OUTPUT);
     
-    analogWrite(ledPinR, 0);
-    analogWrite(ledPinG, 0);
-    analogWrite(ledPinB, 0);
+    for(int j = 0; j < 3; j++)
+    {
+      for (int i = 0; i<255; i+=5 ){
+        RGB_led(i, i, i);
+        delay(10);
+      }
+      for (int i = 255; i>=0; i-=5 ){
+        RGB_led(i, i, i);
+        delay(10);
+      }
+    }
+    RGB_led(0, 0, 0);
+    
     nh.initNode();
     nh.advertise(pub);
     nh.subscribe(sub);
@@ -185,5 +198,4 @@ void loop()
     nh.spinOnce();
 
     delay(10);
-    
 }

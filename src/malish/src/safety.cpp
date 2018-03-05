@@ -10,14 +10,17 @@
 */
 
 #include <sstream>
+// ROS
 #include "ros/ros.h"
 #include <ros/console.h>
 #include "std_msgs/String.h"
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_datatypes.h>
-#include <malish/Obstacle.h>
 #include <geometry_msgs/Pose.h>
+#include <malish/Obstacle.h>
+#include <malish/Diode.h>
+// OpenCV
 #include "opencv2/opencv.hpp"
 
 #define __DEBUG__ 0
@@ -146,6 +149,7 @@ class Safety {
         map_sub_ = nh_.subscribe("/rtabmap/grid_map", 10, &Safety::mapCallback, this);
 	    odom_sub_ = nh_.subscribe("/odometry/filtered/sync", 10, &Safety::odomCallback, this);
         safety_pub_ = nh_.advertise<malish::Obstacle>("/safety", 10);
+        led_pub_ = nh_.advertise<malish::Diode>("/led", 10);
 
         // Init messages.
         safety_msg_.alert = false;
@@ -158,6 +162,10 @@ class Safety {
         safety_msg_.pos.position.x = 0.0;
         safety_msg_.pos.position.y = 0.0;
         safety_msg_.pos.position.z = 0.0;
+
+        led_msg_.red = 0;
+        led_msg_.green = 0;
+        led_msg_.blue = 0;
     }
 
   /// Takes map from rtab_map's message.
@@ -281,6 +289,10 @@ class Safety {
           safety_msg_.pos.position.x = (center_blob.x - robo_x) * map_info.resolution;
           safety_msg_.pos.position.y = (center_blob.y - robo_y) * map_info.resolution;
           safety_msg_.pos.position.z = 0.0;
+          // LED strip lightening.
+          led_msg_.red = 127;
+          led_msg_.green = 127;
+          led_msg_.blue = 127;
       }
       else if(safety_msg_.alert == true) {
           // Reset message.
@@ -292,16 +304,23 @@ class Safety {
           safety_msg_.pos.position.x = 0.0;
           safety_msg_.pos.position.y = 0.0;
           safety_msg_.pos.position.z = 0.0;
+          // LED strip resetting.
+          led_msg_.red = 0;
+          led_msg_.green = 0;
+          led_msg_.blue = 0;
       }
       // Publish safety alarm message.
       safety_pub_.publish(safety_msg_);
+      led_pub_.publish(led_msg_);
   }
 
   protected:;
     ros::Subscriber map_sub_;
     ros::Subscriber odom_sub_;
     ros::Publisher safety_pub_;
+    ros::Publisher led_pub_;
     malish::Obstacle safety_msg_;
+    malish::Diode led_msg_;
     cv::Mat map_image;
     mapInfo map_info;
 };
