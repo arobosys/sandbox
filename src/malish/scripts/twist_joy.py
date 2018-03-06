@@ -2,7 +2,7 @@
 # license removed for brevity
 import rospy
 from std_msgs.msg import String
-from malish.msg import NewTwist, Diode
+from malish.msg import NewTwist, Diode, Obstacle
 from sensor_msgs.msg import Joy
 from math import atan2,pi,sqrt
 from geometry_msgs.msg import Twist
@@ -25,9 +25,15 @@ t2.linear_vel = 0;
 t2.orient = 0.0;
 t2.angle_vel = 0.0;
 
+t3 = NewTwist()
+t3.linear_vel = 0;
+t3.orient = 0.0;
+t3.angle_vel = 0.0;
+
 flag_no_cmd = False;
 
 lift = False;
+alert = False;
 
 def callback(data):
     global pub, t1, flag_no_cmd, pub_lift
@@ -89,20 +95,29 @@ def vel_callback(msg):
     t2.orient = norm_orient + atan2(vel_msg.linear.y, -vel_msg.linear.x)
     t2.angle_vel = vel_msg.angular.z
 
+def safety_callback(msg):
+    global alert
+    alert = msg.alert
+
 def talker():
-    global pub, t1, t2, flag_no_cmd, pub_lift
+    global pub, t1, t2, flag_no_cmd, pub_lift, alert
     rospy.init_node('twist_joy')
     pub = rospy.Publisher('/twist/command', NewTwist, queue_size=10)
     pub_lift = rospy.Publisher('/led', Diode , queue_size=10)
 
     rospy.Subscriber("/joy", Joy, callback)
     rospy.Subscriber("/cmd_vel", Twist, vel_callback)
+    rospy.Subscriber("/safety", Obstacle, safety_callback)
+
 
     rate = rospy.Rate(100) # 100hz
-
     while not rospy.is_shutdown():
-        if flag_no_cmd:
-            pub.publish(t2)
+        print alert
+        if (flag_no_cmd):
+            if alert:
+                pub.publish(t3)
+            else:
+                pub.publish(t2)
         else:
             pub.publish(t1)
         rate.sleep()
