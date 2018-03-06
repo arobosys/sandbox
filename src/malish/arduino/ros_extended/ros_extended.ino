@@ -206,7 +206,7 @@ void setup() {
 void loop()
 {
     sonar_loop();
-    //sendImu();
+    sendImu();
     nh.spinOnce();
 
     delay(10);
