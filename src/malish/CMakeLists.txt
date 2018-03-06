@@ -42,7 +42,7 @@ find_package( OpenCV REQUIRED )
 IF(NOT OpenCV_FOUND)
     MESSAGE(FATAL_ERROR "OpenCV not found")
 ENDIF()
-set(OpenCV_LIBS opencv_core opencv_imgproc)
+set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs opencv_highgui)
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
