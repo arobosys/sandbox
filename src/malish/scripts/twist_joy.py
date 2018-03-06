@@ -2,7 +2,7 @@
 # license removed for brevity
 import rospy
 from std_msgs.msg import String
-from malish.msg import NewTwist, Diode, Obstacle
+from malish.msg import NewTwist, Diode, Obstacle, Lift
 from sensor_msgs.msg import Joy
 from math import atan2,pi,sqrt
 from geometry_msgs.msg import Twist
@@ -58,7 +58,7 @@ def callback(data):
     left_turn = data.axes[4]#2]
     right_turn = data.axes[5]#5]
 
-    lift_msg = Diode()
+    lift_msg = Lift()
     if (lifter==1) and (unlifter!=1):
         lift_msg.dio1 = True
         lift_msg.dio2 = False
@@ -103,7 +103,7 @@ def talker():
     global pub, t1, t2, flag_no_cmd, pub_lift, alert
     rospy.init_node('twist_joy')
     pub = rospy.Publisher('/twist/command', NewTwist, queue_size=10)
-    pub_lift = rospy.Publisher('/led', Diode , queue_size=10)
+    pub_lift = rospy.Publisher('/lift', Lift , queue_size=10)
 
     rospy.Subscriber("/joy", Joy, callback)
     rospy.Subscriber("/cmd_vel", Twist, vel_callback)
@@ -112,7 +112,6 @@ def talker():
 
     rate = rospy.Rate(100) # 100hz
     while not rospy.is_shutdown():
-        print alert
         if (flag_no_cmd):
             if alert:
                 pub.publish(t3)
