@@ -501,20 +501,20 @@ class Safety {
         cv::Mat intersect_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
         cv::bitwise_and(tmp_img, map_image, intersect_img);
 
-        if (__DEBUG__) {
+        /*if (__DEBUG__) {
             // Show in a window.
             cv::namedWindow("Intersection", CV_WINDOW_NORMAL);
             cv::imshow("Intersection", intersect_img * 255);
             if (cv::waitKey(1000.0 / MFPS) == 27)
                 return false;
-        }
+        }*/
 
         // Find external contours on intersection map.
         std::vector<cvContour> contours;
         std::vector<cv::Vec4i> hierarchy;
         cv::findContours(intersect_img, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(1,1));
 
-        if (__DEBUG__) {
+        /*if (__DEBUG__) {
             // Draw contours
             cv::Mat drawing = cv::Mat::zeros(map_image.size(), CV_8UC3);
             for(int i = 0; i < contours.size(); i++) {
@@ -527,7 +527,7 @@ class Safety {
             cv::imshow("Intersection", drawing);
             if (cv::waitKey(1000.0 / MFPS) == 27)
                 return false;
-        }
+        }*/
 
         // Analyse obstacles. Find blob with maximal area.
         double max_blob_area = 0.0;
@@ -536,8 +536,8 @@ class Safety {
 
         ROS_INFO_COND(__DEBUG__ > 0, "max_blob_area: %f", max_blob_area);
 
-        // Send alarm message in case of obstacle occurrence.
-        if(max_blob_area > min_blob_area) {
+        // Send alarm message in case of an obstacle occurrence.
+        if((max_blob_area > min_blob_area)) {
             // Find center of blob in map's SC.
             cv::Point2f center_blob;
             float blob_radius;
@@ -600,13 +600,12 @@ class Safety {
 
         // Draw filled circle of safety vicinity.
         cv::Scalar color = cv::Scalar(1, 1, 1);
-        cv::circle(tmp_img, cv::Point(robo_y, robo_x), radius, color, -1, 8);
-        tmp_img = sector_map(tmp_img, cv::Point(robo_x, robo_y), radius, robo_yaw, 60 * 3.14 / 180, color);
+        tmp_img = sector_map(tmp_img, cv::Point(robo_x, robo_y), radius, robo_yaw, 30 * 3.14 / 180, color);
 
         if (__DEBUG__) {
             // Show in a window.
-            cv::namedWindow("Robot", CV_WINDOW_NORMAL);
-            cv::imshow("Robot", tmp_img * 255);
+            cv::namedWindow("Red", CV_WINDOW_NORMAL);
+            cv::imshow("Red", tmp_img * 255);
             if (cv::waitKey(1000.0 / MFPS) == 27)
                 return;
         }
@@ -616,8 +615,15 @@ class Safety {
             ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
 
             // Draw filled circle of safety vicinity.
-            cv::Scalar color = cv::Scalar(1, 1, 1);
             cv::circle(tmp_img, cv::Point(robo_y, robo_x), radius, color, -1, 8);
+
+            if (__DEBUG__) {
+                // Show in a window.
+                cv::namedWindow("Yellow", CV_WINDOW_NORMAL);
+                cv::imshow("Yellow", tmp_img * 255);
+                if (cv::waitKey(1000.0 / MFPS) == 27)
+                    return;
+            }
 
             // Look for yellow zone if red is empty.
             if(!seek_zone(tmp_img, odom, cv::Point(robo_y, robo_x))) {
@@ -626,21 +632,21 @@ class Safety {
                 led_msg_.blue = 0;
             }
             else {
-                // LED strip lightening.
+                // LED strip notification lightening.
                 led_msg_.red = 255;
                 led_msg_.green = 127;
                 led_msg_.blue = 0;
             }
         }
         else {
-            // LED strip lightening.
+            // LED strip alert lightening.
             led_msg_.red = 255;
             led_msg_.green = 0;
             led_msg_.blue = 0;
+            // Publish safety alarm message.
+            safety_pub_.publish(safety_msg_);
         }
 
-        // Publish safety alarm message.
-        safety_pub_.publish(safety_msg_);
         // Publish LED lightening message.
         led_pub_.publish(led_msg_);
     }
