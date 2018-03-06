@@ -25,22 +25,22 @@
 #define G (9.80665F)
 
 // Max active distance of sonars.
-static const int max_son_dist = 80;
+static const int max_son_dist = 50;
 
 // Pin for audio device.
-int buzz = 6;
+int buzzPin = 7;
 // Pins for leds, debug.actually - Lift pin
-int led1 = 51;
-int led2 = 53;
-int led3 = 8;
+int liftUpPin = 51;
+int liftDownPin = 53;
+//int led3 = 8;
 
-int ledPinR = 12;    // RGB Светодиод
-int ledPinG = 11;    // RGB Светодиод
-int ledPinB = 10;    // RGB Светодиод
+int ledPinR = 6;    // RGB Светодиод
+int ledPinG = 5;    // RGB Светодиод
+int ledPinB = 4;    // RGB Светодиод
 
-bool dio1 = false;
-bool dio2 = false;
-bool dio3 = false;
+bool liftUp = false;
+bool liftDown = false;
+//bool dio3 = false;
 
 /*
  * Set pins for sonars.
@@ -67,15 +67,15 @@ void RGB_led(int r, int g, int b)
  */
 void callback( const malish::Lift& data){
     if (data.dio1&&data.dio2){
-       dio1 = false;
-       dio2 = false;
+       liftUp = false;
+       liftDown = false;
     }
     else{
-      dio1 = data.dio1;
-      dio2 = data.dio2;
+      liftUp = data.dio1;
+      liftDown = data.dio2;
     }
     
-    dio3 = data.dio3;
+    //dio3 = data.dio3;
 }
 
 void callbackRGB( const malish::Diode& data){
@@ -116,40 +116,60 @@ void sonar_loop() {
     int dist3 = ultrasonic3.Ranging(CM);
     int dist4 = ultrasonic4.Ranging(CM);
 
-    if (dist1 < max_son_dist)
+    if ((dist1 < max_son_dist)||(dist2 < max_son_dist)||(dist3 < max_son_dist)||(dist4 < max_son_dist))
     {
-        int frequency = map(dist1, 0, 80, 3500, 4500);
-        tone(buzz, frequency, 10);
+      int dist = min(min(dist1,dist2), min(dist3,dist4)); 
+      int frequency = map(dist, 0, max_son_dist, 1000, 2500);
+      tone(buzzPin, frequency, 10);
     }
 
-
+/*
     if (dist2 < max_son_dist)
     {
         int frequency = map(dist2, 0, 80, 3500, 4500);
-        tone(buzz, frequency, 10);
+        tone(buzzPin, frequency, 10);
     }
 
     
     if (dist3 < max_son_dist)
     {
         int frequency = map(dist3, 0, 80, 3500, 4500);
-        tone(buzz, frequency, 10);
+        tone(buzzPin, frequency, 10);
     }
 
     if (dist4 < max_son_dist)
     {
         int frequency = map(dist4, 0, 80, 3500, 4500);
-        tone(buzz, frequency, 10);
+        tone(buzzPin, frequency, 10);
+    }
+*/
+    if((liftUp)&&(!liftDown))
+    {
+      digitalWrite(liftUpPin, HIGH);
+      digitalWrite(liftDownPin, LOW);
     }
 
-    if(dio1){digitalWrite(led1, HIGH);}
-    else {digitalWrite(led1, LOW);}
+    if((liftDown)&&(!liftUp))
+    {
+      digitalWrite(liftUpPin, LOW);
+      digitalWrite(liftDownPin, HIGH);
+    }
 
-    if(dio2){digitalWrite(led2, HIGH);}
-    else {digitalWrite(led2, LOW);}
+    if((!liftDown)&&(!liftUp))
+    {
+      digitalWrite(liftUpPin, LOW);
+      digitalWrite(liftDownPin, LOW);
+    }
+    
+    if((liftDown)&&(liftUp))
+    {
+      digitalWrite(liftUpPin, LOW);
+      digitalWrite(liftDownPin, LOW);
+    }
 
-    if(dio3){digitalWrite(led3, HIGH);}
-    else {digitalWrite(led3, LOW);}
+    
+    //if(dio3){digitalWrite(liftUpPin, HIGH);}
+    //else {digitalWrite(liftDownPin, LOW);}
 
     son.sonLeft = dist1;
     son.sonRight = dist2;
@@ -160,26 +180,18 @@ void sonar_loop() {
 }
 
 void setup() {
-    pinMode(led1, OUTPUT);
-    pinMode(led2, OUTPUT);
-    pinMode(led3, OUTPUT);
+    pinMode(liftUpPin, OUTPUT);
+    pinMode(liftDownPin, OUTPUT);
+    //pinMode(led3, OUTPUT);
     pinMode(ledPinR, OUTPUT);
     pinMode(ledPinG, OUTPUT);
     pinMode(ledPinB, OUTPUT);
-    
-    for(int j = 0; j < 3; j++)
-    {
-      for (int i = 0; i<255; i+=5 ){
-        RGB_led(i, i, i);
-        delay(10);
-      }
-      for (int i = 255; i>=0; i-=5 ){
-        RGB_led(i, i, i);
-        delay(10);
-      }
-    }
-    RGB_led(0, 0, 0);
-    
+    pinMode(buzzPin, OUTPUT);
+    /*for (int i = 255; i>=0; i-=5 ){
+      RGB_led(i, i, i);
+      delay(30);
+    }*/
+    RGB_led(10, 10, 10);
     nh.initNode();
     nh.advertise(pub);
     nh.subscribe(sub);
