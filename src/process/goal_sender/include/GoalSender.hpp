@@ -6,10 +6,12 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf/tf.h>
 #include <geometry_msgs/Quaternion.h>
+#include <malish/Lift.h>
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 class GoalSender {
+    ros::Publisher pub_lift;
 
     const std::string NUM_GOAL = "num_goal";
     const std::string GOAL1 = "2d_goal1";

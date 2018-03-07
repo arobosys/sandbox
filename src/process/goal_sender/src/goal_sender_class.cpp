@@ -3,7 +3,7 @@
 #include "GoalSender.hpp"
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
-
+    pub_lift = handle.advertise<Malish::Lift>("/lift", 10);
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
                        std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
                        std::bind(&GoalSender::preemtCallback,this));
@@ -78,7 +78,14 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
     goalToMove[6][0]=goal[0];
     goalToMove[6][1]=goal[1];
     goalToMove[6][2]=goal[2];
-
+    
+    malish::Lift lift_msg;
+    lift_msg.dio1 = True;
+    lift_msg.dio2 = False;
+    lift_msg.dio3 = False;
+    pub_lift.publish(lift_msg);
+    ROS_INFO("I am lifting load");
+    ros::Duration(3).sleep();
 
     //tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
@@ -112,7 +119,20 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
         ac.waitForResult();
 
         if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-            ROS_INFO("Malish, the robot moved to goal %d", i+1);
+        {
+            ROS_INFO("Malish, the robot moved to goal %d", i + 1);
+            if(i==3)
+            {
+                malish::Lift lift_msg;
+                lift_msg.dio1 = False;
+                lift_msg.dio2 = True;
+                lift_msg.dio3 = True;
+                pub_lift.publish(lift_msg);
+                ROS_INFO("I am unloading");
+                ros::Duration(3).sleep();
+            }
+
+        }
         else
             ROS_INFO("The robot failed to move to goal %d for some reason", i+1);
     }
