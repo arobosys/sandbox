@@ -16,8 +16,12 @@ class GoalSender {
     const std::string GOAL2 = "2d_goal2";
     const std::string GOAL3 = "2d_goal3";
     const std::string GOAL4 = "2d_goal4";
+    const std::string GOAL5 = "2d_goal5";
+    const std::string GOAL6 = "2d_goal6";
+    const std::string GOAL7 = "2d_goal7";
 
-    int num_goal=4;
+    int num_goal=7;
+
 
     std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
 
