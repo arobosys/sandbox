@@ -17,12 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package()
 include_directories(${catkin_INCLUDE_DIRS} include)
 
-add_library(joy_sender STATIC
-        include/joy_process.hpp src/joy_sender_class.cpp)
+#add_library(joy_sender STATIC
+#        include/joy_process.hpp src/joy_sender_class.cpp)
 
-add_executable(joy_process src/main.cpp)
+#add_executable(joy_process src/main.cpp)
 
-target_link_libraries(joy_process ${catkin_LIBRARIES})
-target_link_libraries(joy_process joy_sender_class)
+#target_link_libraries(joy_process ${catkin_LIBRARIES})
+#target_link_libraries(joy_process joy_sender_class)
 
 
