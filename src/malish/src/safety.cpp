@@ -22,6 +22,8 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <malish/Obstacle.h>
 #include <malish/Diode.h>
+#include <sensor_msgs/Range.h>
+
 // OpenCV
 #include <opencv2/imgproc.hpp>
 #include "opencv2/opencv.hpp"
@@ -164,6 +166,12 @@ class Safety {
         safety_pub_ = nh_.advertise<malish::Obstacle>("/safety", 10);
         led_pub_ = nh_.advertise<malish::Diode>("/led", 10);
 
+        // Subscribe to Sonar's data.
+        front_sonar_sub_ = nh_.subscribe("/sonar/front", 10, &SonarTransform::frontSonarCallback, this);
+        rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &SonarTransform::rearSonarCallback, this);
+        left_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &SonarTransform::leftSonarCallback, this);
+        right_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &SonarTransform::rightSonarCallback, this);
+
         // Init messages.
         safety_msg_.alert = false;
 
@@ -205,6 +213,22 @@ class Safety {
               return;
           ROS_INFO("map_info.resolution %f", map_info.resolution);
       }
+  }
+
+  void frontSonarCallback (sensor_msgs::Range const& range) {
+	  static fron_range_queue;
+  }
+
+  void rearSonarCallback (sensor_msgs::Range const& range) {
+
+  }
+
+  void leftSonarCallback (sensor_msgs::Range const& range) {
+
+  }
+
+  void rightSonarCallback (sensor_msgs::Range const& range) {
+
   }
 
   /// Takes map from rtab_map's message.
@@ -656,6 +680,11 @@ class Safety {
     ros::Subscriber odom_sub_;
     ros::Publisher safety_pub_;
     ros::Publisher led_pub_;
+    ros::Subscriber front_sonar_sub_;
+    ros::Subscriber rear_sonar_sub_;
+    ros::Subscriber left_sonar_sub_;
+    ros::Subscriber right_sonar_sub_;
+
     malish::Obstacle safety_msg_;
     malish::Diode led_msg_;
     cv::Mat map_image;
