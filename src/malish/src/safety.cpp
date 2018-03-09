@@ -46,12 +46,32 @@ static const float robot_length = 0.65;
 static const float alert_margin = 0.88;
 /// Margin of vicinity to light LED in yellow (notification), [m].
 static const float yellow_margin = 1.25;
+/// Maximal sonar distance.
+static const float sonar_max = 0.80;
 /// Minimal blob area to consider it as obstacle, [pixels].
 static const float min_blob_area = 20.0;
 /// Constant for comparision with float type zero value.
 static const float eps = 1e-10;
 
 typedef std::vector<cv::Point> cvContour;
+
+void set_red(malish::Diode & msg) {
+	msg.red = 255;
+	msg.green = 0;
+	msg.blue = 0;
+}
+
+void set_yellow(malish::Diode & msg) {
+	msg.red = 255;
+	msg.green = 127;
+	msg.blue = 0;
+}
+
+void reset_LED(malish::Diode & msg) {
+	msg.red = 0;
+	msg.green = 0;
+	msg.blue = 0;
+}
 
 // Returns mean of N elements
 float push_and_mean_list(std::list<float> & queue, float val, unsigned int size=5) {
@@ -210,6 +230,8 @@ class Safety {
         led_msg_.red = 0;
         led_msg_.green = 0;
         led_msg_.blue = 0;
+
+        sonar_alarm = false;
     }
 
   /// Takes map from rtab_map's message.
@@ -239,22 +261,60 @@ class Safety {
   }
 
   void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> front_range_list;
+	  static std::list<float> range_list;
 
-	  float mean = push_and_mean_list(front_range_list, std_sonar_msg.range, 5);
+	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
 
+	  if (mean > alert_margin && mean < sonar_max) {
+		  set_yellow(led_msg_);
+		  led_pub_.publish(led_msg_);
+		  sonar_alarm = false;
+	  } else if(mean < alert_margin) {
+		  safety_msg_.alert = true;
+
+		  set_red(led_msg_);
+
+		  ROS_INFO("front sonar mean range %f", mean);
+
+		  sonar_alarm = true;
+	      // safety_pub_.publish(safety_msg_);
+	      // led_pub_.publish(led_msg_);
+	  } else {
+		  sonar_alarm = false;
+	  }
   }
 
   void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+	  static std::list<float> range_list;
 
+	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+
+	  if (mean > alert_margin && mean < sonar_max && !sonar_alarm) {
+		  set_yellow(led_msg_);
+		  led_pub_.publish(led_msg_);
+	  }
   }
 
   void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+	  static std::list<float> range_list;
 
+	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+
+	  if (mean > alert_margin && mean < sonar_max && !sonar_alarm) {
+		  set_yellow(led_msg_);
+		  led_pub_.publish(led_msg_);
+	  }
   }
 
   void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+	  static std::list<float> range_list;
 
+	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+
+	  if (mean > alert_margin && mean < sonar_max && !sonar_alarm) {
+		  set_yellow(led_msg_);
+		  led_pub_.publish(led_msg_);
+	  }
   }
 
   /// Takes map from rtab_map's message.
@@ -518,8 +578,14 @@ class Safety {
             if (cv::waitKey(1000.0 / MFPS) == 27)
                 return;
         }
+
+        // If sonar give alert than send alarm message
+        if(sonar_alarm == true) {
+        	led_pub_.publish(led_msg_);
+        	safety_pub_.publish(safety_msg_);
+        }
         // Look for red zone.
-        if(!seek_zone(tmp_img, odom, cv::Point(robo_y, robo_x))) {
+        else if(!seek_zone(tmp_img, odom, cv::Point(robo_y, robo_x))) {
             radius = static_cast<int>((robot_length / 2.0 + yellow_margin) / map_info.resolution);
             ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
 
@@ -586,6 +652,7 @@ class Safety {
     malish::Diode led_msg_;
     cv::Mat map_image;
     mapInfo map_info;
+    bool sonar_alarm;
 };
 
 int main(int argc, char **argv)
