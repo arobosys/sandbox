@@ -43,11 +43,13 @@ static const float robot_width = 0.45;
 /// Robot's length, [m].
 static const float robot_length = 0.65;
 /// Margin of safety vicinity, [m].
-static const float alert_margin = 0.88;
+static const float alert_margin = 0.05;
 /// Margin of vicinity to light LED in yellow (notification), [m].
 static const float yellow_margin = 1.25;
 /// Maximal sonar distance.
-static const float sonar_max = 0.80;
+static const float sonar_max_phisical = 1.03;
+static const float sonar_max = 1.0;
+static const float sonar_alert = 0.85;
 /// Minimal blob area to consider it as obstacle, [pixels].
 static const float min_blob_area = 20.0;
 /// Constant for comparision with float type zero value.
@@ -216,6 +218,7 @@ class Safety {
         right_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rightSonarCallback, this);
 
         // Init messages.
+        safety_msg_.timestamp = ros::Time::now();
         safety_msg_.alert = false;
 
         safety_msg_.pos.orientation.w = 0.0;
@@ -256,7 +259,7 @@ class Safety {
           cv::imshow("image", map_image * 255);
           if (cv::waitKey(1000.0 / MFPS) == 27)
               return;
-          ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
+          // ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       }
   }
 
@@ -265,11 +268,14 @@ class Safety {
 
 	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
 
-	  if (mean > alert_margin && mean < sonar_max) {
+	  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+	  if (mean > sonar_alert && mean < sonar_max) {
 		  set_yellow(led_msg_);
 		  led_pub_.publish(led_msg_);
 		  sonar_alarm = false;
-	  } else if(mean < alert_margin) {
+	  } else if(mean < sonar_alert) {
+		  safety_msg_.timestamp = ros::Time::now();
 		  safety_msg_.alert = true;
 
 		  set_red(led_msg_);
@@ -289,7 +295,7 @@ class Safety {
 
 	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
 
-	  if (mean > alert_margin && mean < sonar_max && !sonar_alarm) {
+	  if (mean < sonar_max && !sonar_alarm) {
 		  set_yellow(led_msg_);
 		  led_pub_.publish(led_msg_);
 	  }
@@ -300,7 +306,7 @@ class Safety {
 
 	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
 
-	  if (mean > alert_margin && mean < sonar_max && !sonar_alarm) {
+	  if (mean < sonar_max && !sonar_alarm) {
 		  set_yellow(led_msg_);
 		  led_pub_.publish(led_msg_);
 	  }
@@ -311,7 +317,7 @@ class Safety {
 
 	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
 
-	  if (mean > alert_margin && mean < sonar_max && !sonar_alarm) {
+	  if (mean < sonar_max && !sonar_alarm) {
 		  set_yellow(led_msg_);
 		  led_pub_.publish(led_msg_);
 	  }
@@ -351,14 +357,14 @@ class Safety {
       // Robot coordinate in map's SC.
       float robo_x = (-map_info.origin.position.x + odom.pose.pose.position.x) / map_info.resolution;
       float robo_y = (-map_info.origin.position.y + odom.pose.pose.position.y) / map_info.resolution;
-      ROS_INFO_COND(__DEBUG__ > 0, "robo_x: %f, robo_y: %f", robo_x, robo_y);
+      // ROS_INFO_COND(__DEBUG__ > 0, "robo_x: %f, robo_y: %f", robo_x, robo_y);
 
       // Render robot and vicinity into image with map's size.
       // Binary image with robot and safety vicinity.
       cv::Mat tmp_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
 
       int radius = static_cast<int>((robot_length / 2.0 + alert_margin) / map_info.resolution);
-      ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
+      // ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
 
       // Draw filled circle of safety vicinity.
       cv::Scalar color = cv::Scalar(1, 1, 1);
@@ -422,6 +428,7 @@ class Safety {
           ROS_INFO_COND(__DEBUG__ > 0, "center_blob.x: %f, center_blob.y: %f", center_blob.x, center_blob.y);
 
           // Fill out safety message form.
+          safety_msg_.timestamp = ros::Time::now();
           safety_msg_.alert = true;
 
           // Angle between robot and obstacle.
@@ -443,6 +450,7 @@ class Safety {
       }
       else if(safety_msg_.alert == true) {
           // Reset message.
+    	  safety_msg_.timestamp = ros::Time::now();
           safety_msg_.alert = false;
           safety_msg_.pos.orientation.w = 0.0;
           safety_msg_.pos.orientation.x = 0.0;
@@ -511,6 +519,7 @@ class Safety {
             ROS_INFO_COND(__DEBUG__ > 0, "center_blob.x: %f, center_blob.y: %f", center_blob.x, center_blob.y);
 
             // Fill out safety message form.
+            safety_msg_.timestamp = ros::Time::now();
             safety_msg_.alert = true;
 
             // Angle between robot and obstacle.
@@ -530,6 +539,7 @@ class Safety {
         }
         else if(safety_msg_.alert == true) {
             // Reset message.
+        	safety_msg_.timestamp = ros::Time::now();
             safety_msg_.alert = false;
             safety_msg_.pos.orientation.w = 0.0;
             safety_msg_.pos.orientation.x = 0.0;
@@ -560,7 +570,7 @@ class Safety {
         cv::Mat tmp_img = cv::Mat::zeros(map_image.size(), CV_8UC1);
         // Render robot and vicinity into image with map's size.
         int radius = static_cast<int>((robot_length / 2.0 + alert_margin) / map_info.resolution);
-        ROS_INFO_COND(__DEBUG__ > 0, "Robot red safety zone radius: %d", radius);
+        // ROS_INFO_COND(__DEBUG__ > 0, "Robot red safety zone radius: %d", radius);
 
         // Draw filled circle of safety vicinity.
         cv::Scalar color = cv::Scalar(1, 1, 1);
@@ -583,7 +593,7 @@ class Safety {
         // Look for red zone.
         else if(!seek_zone(tmp_img, odom, cv::Point(robo_y, robo_x))) {
             radius = static_cast<int>((robot_length / 2.0 + yellow_margin) / map_info.resolution);
-            ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
+            // ROS_INFO_COND(__DEBUG__ > 0, "Robot safety zone radius: %d", radius);
 
             // Draw filled circle of safety vicinity.
             cv::circle(tmp_img, cv::Point(robo_y, robo_x), radius, color, -1, 8);
@@ -606,6 +616,7 @@ class Safety {
             }
             if(safety_msg_.alert == true) {
                 // Reset message.
+            	safety_msg_.timestamp = ros::Time::now();
                 safety_msg_.alert = false;
                 safety_msg_.pos.orientation.w = 0.0;
                 safety_msg_.pos.orientation.x = 0.0;
