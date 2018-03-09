@@ -10,6 +10,7 @@
 */
 
 #include <sstream>
+#include <list>
 // ROS
 #include "ros/ros.h"
 #include <ros/console.h>
@@ -22,6 +23,8 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <malish/Obstacle.h>
 #include <malish/Diode.h>
+#include <sensor_msgs/Range.h>
+
 // OpenCV
 #include <opencv2/imgproc.hpp>
 #include "opencv2/opencv.hpp"
@@ -49,6 +52,28 @@ static const float min_blob_area = 20.0;
 static const float eps = 1e-10;
 
 typedef std::vector<cv::Point> cvContour;
+
+// Returns mean of N elements
+float push_and_mean_list(std::list<float> & queue, float val, unsigned int size=5) {
+	static unsigned int qsize = size;
+	float mean = 0.0;
+
+	queue.push_back(val);
+
+	if(queue.size() == qsize) {
+		queue.pop_front();
+	} else if (queue.size() > qsize) {
+		while(queue.size() > qsize) {
+			queue.pop_front();
+		}
+	}
+
+	for (std::list<float>::iterator it=queue.begin(); it != queue.end(); ++it) {
+		mean += *it;
+	}
+
+	return mean / queue.size();
+}
 
 /**
  * mapInfo - short version of nav_msgs::OccupancyGrid's map.info field.
@@ -164,6 +189,12 @@ class Safety {
         safety_pub_ = nh_.advertise<malish::Obstacle>("/safety", 10);
         led_pub_ = nh_.advertise<malish::Diode>("/led", 10);
 
+        // Subscribe to Sonar's data.
+        front_sonar_sub_ = nh_.subscribe("/sonar/front", 10, &Safety::frontSonarCallback, this);
+        rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rearSonarCallback, this);
+        left_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::leftSonarCallback, this);
+        right_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rightSonarCallback, this);
+
         // Init messages.
         safety_msg_.alert = false;
 
@@ -205,6 +236,25 @@ class Safety {
               return;
           ROS_INFO("map_info.resolution %f", map_info.resolution);
       }
+  }
+
+  void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+	  static std::list<float> front_range_list;
+
+	  float mean = push_and_mean_list(front_range_list, std_sonar_msg.range, 5);
+
+  }
+
+  void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+
+  }
+
+  void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+
+  }
+
+  void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+
   }
 
   /// Takes map from rtab_map's message.
@@ -527,6 +577,11 @@ class Safety {
     ros::Subscriber odom_sub_;
     ros::Publisher safety_pub_;
     ros::Publisher led_pub_;
+    ros::Subscriber front_sonar_sub_;
+    ros::Subscriber rear_sonar_sub_;
+    ros::Subscriber left_sonar_sub_;
+    ros::Subscriber right_sonar_sub_;
+
     malish::Obstacle safety_msg_;
     malish::Diode led_msg_;
     cv::Mat map_image;
