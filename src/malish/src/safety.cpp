@@ -236,7 +236,7 @@ class Safety {
 
   /// Takes map from rtab_map's message.
   void mapCallback (const nav_msgs::OccupancyGrid& map) {
-      ROS_INFO("map_info.resolution %f", map_info.resolution);
+	  ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       // Read map info.
       map_info.height = map.info.height;
       map_info.width = map.info.width;
@@ -256,7 +256,7 @@ class Safety {
           cv::imshow("image", map_image * 255);
           if (cv::waitKey(1000.0 / MFPS) == 27)
               return;
-          ROS_INFO("map_info.resolution %f", map_info.resolution);
+          ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       }
   }
 
@@ -274,11 +274,11 @@ class Safety {
 
 		  set_red(led_msg_);
 
-		  ROS_INFO("front sonar mean range %f", mean);
+		  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
 		  sonar_alarm = true;
-	      // safety_pub_.publish(safety_msg_);
-	      // led_pub_.publish(led_msg_);
+	      safety_pub_.publish(safety_msg_);
+	      led_pub_.publish(led_msg_);
 	  } else {
 		  sonar_alarm = false;
 	  }
@@ -338,7 +338,7 @@ class Safety {
           cv::imshow("image", map_image * 255);
           if (cv::waitKey(1000.0 / MFPS) == 27)
               return;
-          ROS_INFO("map_info.resolution %f", map_info.resolution);
+          ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       }
   }
 
@@ -439,9 +439,7 @@ class Safety {
           safety_msg_.pos.position.y = (center_blob.y - robo_y) * map_info.resolution;
           safety_msg_.pos.position.z = 0.0;
           // LED strip lightening.
-          led_msg_.red = 127;
-          led_msg_.green = 0;
-          led_msg_.blue = 0;
+          set_red(led_msg_);
       }
       else if(safety_msg_.alert == true) {
           // Reset message.
@@ -454,9 +452,7 @@ class Safety {
           safety_msg_.pos.position.y = 0.0;
           safety_msg_.pos.position.z = 0.0;
           // LED strip resetting.
-          led_msg_.red = 0;
-          led_msg_.green = 0;
-          led_msg_.blue = 0;
+          reset_LED(led_msg_);
       }
       // Publish safety alarm message.
       safety_pub_.publish(safety_msg_);
@@ -602,15 +598,11 @@ class Safety {
 
             // Look for yellow zone if red is empty.
             if(!seek_zone(tmp_img, odom, cv::Point(robo_y, robo_x))) {
-                led_msg_.red = 0;
-                led_msg_.green = 0;
-                led_msg_.blue = 0;
+            	reset_LED(led_msg_);
             }
             else {
                 // LED strip notification lightening.
-                led_msg_.red = 255;
-                led_msg_.green = 127;
-                led_msg_.blue = 0;
+            	set_yellow(led_msg_);
             }
             if(safety_msg_.alert == true) {
                 // Reset message.
@@ -627,9 +619,7 @@ class Safety {
         }
         else { // If obstacle in red zone.
             // LED strip alert lightening.
-            led_msg_.red = 255;
-            led_msg_.green = 0;
-            led_msg_.blue = 0;
+        	set_red(led_msg_);
             // Publish safety alarm message.
             safety_pub_.publish(safety_msg_);
         }
