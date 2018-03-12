@@ -206,16 +206,16 @@ class Safety {
     Safety() {
         ros::NodeHandle nh_;
         // Subscribe to map and odometry topics.
-        map_sub_ = nh_.subscribe("/rtabmap/grid_map", 10, &Safety::mapCallback, this);
-	    odom_sub_ = nh_.subscribe("/odometry/filtered/sync", 10, &Safety::odomCallback3, this);
+        // map_sub_ = nh_.subscribe("/rtabmap/grid_map", 10, &Safety::mapCallback, this);
+	    // odom_sub_ = nh_.subscribe("/odometry/filtered/sync", 10, &Safety::odomCallback3, this);
         safety_pub_ = nh_.advertise<malish::Obstacle>("/safety", 10);
         led_pub_ = nh_.advertise<malish::Diode>("/led", 10);
 
         // Subscribe to Sonar's data.
         front_sonar_sub_ = nh_.subscribe("/sonar/front", 10, &Safety::frontSonarCallback, this);
         rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rearSonarCallback, this);
-        left_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::leftSonarCallback, this);
-        right_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rightSonarCallback, this);
+        left_sonar_sub_ = nh_.subscribe("/sonar/left", 10, &Safety::leftSonarCallback, this);
+        right_sonar_sub_ = nh_.subscribe("/sonar/right", 10, &Safety::rightSonarCallback, this);
 
         // Init messages.
         safety_msg_.timestamp = ros::Time::now();
@@ -238,7 +238,7 @@ class Safety {
     }
 
   /// Takes map from rtab_map's message.
-  void mapCallback (const nav_msgs::OccupancyGrid& map) {
+  /*void mapCallback (const nav_msgs::OccupancyGrid& map) {
 	  ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       // Read map info.
       map_info.height = map.info.height;
@@ -261,7 +261,7 @@ class Safety {
               return;
           // ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       }
-  }
+  }*/
 
   void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
 	  static std::list<float> range_list;
@@ -285,8 +285,17 @@ class Safety {
 		  sonar_alarm = true;
 	      safety_pub_.publish(safety_msg_);
 	      led_pub_.publish(led_msg_);
+	  } else if(sonar_alarm == true){
+		  sonar_alarm = false;
+		  safety_msg_.timestamp = ros::Time::now();
+		  safety_msg_.alert = false;
+		  safety_pub_.publish(safety_msg_);
+		  reset_LED(led_msg_);
+		  led_pub_.publish(led_msg_);
 	  } else {
 		  sonar_alarm = false;
+		  safety_msg_.timestamp = ros::Time::now();
+		  safety_msg_.alert = false;
 	  }
   }
 
@@ -297,6 +306,9 @@ class Safety {
 
 	  if (mean < sonar_max && !sonar_alarm) {
 		  set_yellow(led_msg_);
+		  led_pub_.publish(led_msg_);
+	  } else if(sonar_alarm != true) {
+		  reset_LED(led_msg_);
 		  led_pub_.publish(led_msg_);
 	  }
   }
@@ -309,6 +321,9 @@ class Safety {
 	  if (mean < sonar_max && !sonar_alarm) {
 		  set_yellow(led_msg_);
 		  led_pub_.publish(led_msg_);
+	  } else if(sonar_alarm != true) {
+		  reset_LED(led_msg_);
+		  led_pub_.publish(led_msg_);
 	  }
   }
 
@@ -320,11 +335,14 @@ class Safety {
 	  if (mean < sonar_max && !sonar_alarm) {
 		  set_yellow(led_msg_);
 		  led_pub_.publish(led_msg_);
+	  } else if(sonar_alarm != true) {
+		  reset_LED(led_msg_);
+		  led_pub_.publish(led_msg_);
 	  }
   }
 
   /// Takes map from rtab_map's message.
-  void mapCallback_costmap2d_ROS (const nav_msgs::OccupancyGrid& map) {
+  /*void mapCallback_costmap2d_ROS (const nav_msgs::OccupancyGrid& map) {
       // Read map info.
       map_info.height = map.info.height;
       map_info.width = map.info.width;
@@ -346,10 +364,10 @@ class Safety {
               return;
           ROS_INFO_COND(__DEBUG__ > 0, "map_info.resolution %f", map_info.resolution);
       }
-  }
+  }*/
 
   /// Takes odometry data and analyzes robot's safety zone on obstacle occurrence.
-  void odomCallback (const nav_msgs::Odometry & odom) {
+  /*void odomCallback (const nav_msgs::Odometry & odom) {
       if(map_info.resolution < eps) {
           ROS_WARN("Warning: empty rtab map.");
           return;
@@ -637,7 +655,7 @@ class Safety {
 
         // Publish LED lightening message.
         led_pub_.publish(led_msg_);
-    }
+    }*/
 
   protected:;
     ros::Subscriber map_sub_;
