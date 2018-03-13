@@ -7,7 +7,11 @@
 #include "malish/ArduOdom.h"
 #include <boost/assign.hpp>
 
+#include "XmlRpcException.h"
+
 //#define __OMNI_ODOM_DEBUG
+
+const int COV_SIZE = 36;
 
 class OmniWheelOdometry
 {
@@ -63,6 +67,31 @@ public:
         else
         {
             ROS_WARN("Failed to get param 'omni_params', using default: %f", ly);
+        }
+
+        XmlRpc::XmlRpcValue cov_matrix_param;
+
+        try
+        {
+            nh_.getParam("omni_odom/covariance", cov_matrix_param);
+
+            ROS_ASSERT(cov_matrix_param.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+            if (cov_matrix_param.size() != COV_SIZE)
+            {
+                ROS_WARN_STREAM("Configuration vector for covariance should have 36 entries.");
+            }
+
+            for (int i = 0; i < cov_matrix_param.size(); i++)
+            {
+                cov_matrix[i] = static_cast<double>(cov_matrix_param[i]);
+            }
+        }
+        catch (XmlRpc::XmlRpcException &e)
+        {
+            ROS_FATAL_STREAM("Could not read covariance matrix" <<
+                        " (type: " << cov_matrix_param.getType() << ", expected: " << XmlRpc::XmlRpcValue::TypeArray
+                        << "). Error was " << e.getMessage() << "\n");
         }
     }
 
@@ -122,12 +151,13 @@ public:
         odom.pose.pose.position.y = y;
         odom.pose.pose.position.z = 0.0;
         odom.pose.pose.orientation = odom_quat;
-	    odom.pose.covariance =  boost::assign::list_of (1e-3) (0) (0)  (0)  (0)  (0)
+        odom.pose.covariance = cov_matrix;
+	    /*odom.pose.covariance =  boost::assign::list_of (1e-3) (0) (0)  (0)  (0)  (0)
                                                        (0) (1e-3)  (0)  (0)  (0)  (0)
                                                        (0)   (0)  (1e6) (0)  (0)  (0)
                                                        (0)   (0)   (0) (1e6) (0)  (0)
                                                        (0)   (0)   (0)  (0) (1e6) (0)
-                                                       (0)   (0)   (0)  (0)  (0)  (0.03) ; // 1e3
+                                                       (0)   (0)   (0)  (0)  (0)  (0.03) ; // 1e3*/
 
 
         //set the velocity
@@ -139,12 +169,13 @@ public:
         odom.twist.twist.linear.x = vx;
         odom.twist.twist.linear.y = vy;
         odom.twist.twist.angular.z = vth;
-	    odom.twist.covariance =  boost::assign::list_of (1e-3) (0)   (0)  (0)  (0)  (0)
+	    odom.twist.covariance = cov_matrix;
+	    /*odom.twist.covariance =  boost::assign::list_of (1e-3) (0)   (0)  (0)  (0)  (0)
                                                       (0) (1e-3)  (0)  (0)  (0)  (0)
                                                       (0)   (0)  (1e6) (0)  (0)  (0)
                                                       (0)   (0)   (0) (1e6) (0)  (0)
                                                       (0)   (0)   (0)  (0) (1e6) (0)
-                                                      (0)   (0)   (0)  (0)  (0)  (0.03) ;
+                                                      (0)   (0)   (0)  (0)  (0)  (0.03) ;*/
 
         odom_pub_.publish(odom);
 
@@ -165,6 +196,8 @@ protected:
 #ifdef __ODOM_BROADCASTER
     tf::TransformBroadcaster odom_broadcaster;
 #endif
+
+    boost::array<double, COV_SIZE> cov_matrix;
 };
 
 
