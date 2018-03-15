@@ -14,7 +14,7 @@
         <param name="frame_id"             type="string" value="base_link"/>
         <param name="odom_frame_id"        type="string" value=""/>
         <param name="wait_for_transform_duration"  type="double"   value="0.2"/>
-        <param name="database_path"        type="string" value="~/.ros/rtabmap.db"/>
+        <param name="database_path"        type="string" value="~/.ros/rtabmap_1.db"/>
         <param name="approx_sync"          type="bool"   value="false"/>
         <param name="config_path"          type="string" value=""/>
         <param name="queue_size"           type="int" value="100"/>
@@ -23,7 +23,7 @@
 
         <param name="Grid/NormalsSegmentation" value="true"/>
         <param name="Grid/FromDepth" value="true"/>
-        <param name="Grid/DepthMax" value="5.0"/>
+        <param name="Grid/DepthMax" value="5.5"/>
         <param name="Rtabmap/DetectionRate" value="15"/>
         <param name="SURF/GpuVersion" value="true"/>
         <param name="Reg/Force3DoF" value="true"/>
@@ -55,12 +55,12 @@
 
         <param name="zed_id"                value="0" />
 
-        <param name="resolution"            value="3" />
-        <param name="quality"               value="1" />
-        <param name="sensing_mode"          value="0" />
-        <param name="frame_rate"            value="60" />
+        <param name="resolution"            value="2" />
+        <param name="quality"               value="3" />
+        <param name="sensing_mode"          value="1" />
+        <param name="frame_rate"            value="20" />
         <param name="odometry_db"           value="" />
-        <param name="openni_depth_mode"     value="0" />
+        <param name="openni_depth_mode"     value="1" />
         <param name="gpu_id"                value="-1" />
         <param name="confidence"            value="100" />
         <param name="depth_stabilization"   value="1" />
