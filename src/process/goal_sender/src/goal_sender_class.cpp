@@ -1,12 +1,18 @@
 #include <map>
 #include <unordered_map>
 #include "GoalSender.hpp"
+#include <math.h>
 //#include <malish/Lift.h>
 // #include </home/zhuhua/AGRO/catkin_ws/src/malish/devel/include/malish/Lift.h>
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
     num_goal = 7;
-    //pub_lift = handle.advertise<Malish::Lift>("/lift", 10);
+    _gogogo = false;
+    _restart = false;
+
+    pub_CMD = handle.subscribe("/joy/command", 10, &GoalSender::cmdCallback, this);
+
+    //pub_lift = handle.advertise<Malish::Lift>("/lift", 10,cmdCallback());
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
                        std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
                        std::bind(&GoalSender::preemtCallback,this));
@@ -100,50 +106,75 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
         ROS_INFO("Waiting for the move_base action server to come up");
     }
 
-    for(int i=0;i<num_goal;i++)
+    int curr_goal = 0;
+
+    while(curr_goal < num_goal)
     {
+        if(_restart)
+            curr_goal = 0;
+        if(curr_goal == num_goal)
+            break;
         move_base_msgs::MoveBaseGoal goal;
 
         //The goal_(i+1)
         goal.target_pose.header.frame_id = "map";
         goal.target_pose.header.stamp = ros::Time::now();
 
-        goal.target_pose.pose.position.x = goalToMove[i][0];
-        goal.target_pose.pose.position.y = goalToMove[i][1];
+        goal.target_pose.pose.position.x = goalToMove[curr_goal][0];
+        goal.target_pose.pose.position.y = goalToMove[curr_goal][1];
 
-        double radians=goalToMove[i][2]*(3.1415916/180);
+        double radians=goalToMove[curr_goal][2]*(M_PI/180.0);
         tf::Quaternion quaternion;
         quaternion = tf::createQuaternionFromYaw(radians);
         geometry_msgs::Quaternion qMsg;
         tf::quaternionTFToMsg(quaternion,qMsg);
         goal.target_pose.pose.orientation= qMsg;
 
-        ROS_INFO("Sending goal %d to move_base",i+1);
-        ac.sendGoal(goal);
+        int retry = 0;
+        do {
+            if (retry)
+                ROS_INFO("Retry #%d sending a goal %d to move_base", retry, curr_goal + 1);
+            ROS_INFO("Sending goal %d to move_base", curr_goal + 1);
+            ac.sendGoal(goal);
 
-        ac.waitForResult();
+            ac.waitForResult();
 
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-            ROS_INFO("Malish, the robot moved to goal %d", i + 1);
-            if(i==3)
-            {
-                /*
-                malish::Lift lift_msg;
-                lift_msg.dio1 = False;
-                lift_msg.dio2 = True;
-                lift_msg.dio3 = True;
-                pub_lift.publish(lift_msg);
-                 */
-                ROS_INFO("I am unloading");
-                ros::Duration(3).sleep();
+            if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+                ROS_INFO("Malish, the robot moved to goal %d", curr_goal + 1);
+                if (curr_goal == 3) {
+                    ROS_INFO("I am unloading");
+
+                    int sec_to_wait = 60; // wait
+
+                    while (sec_to_wait) {
+                        ROS_INFO("Wait %d seconds", sec_to_wait);
+                        if (_gogogo)
+                            sec_to_wait = 0;
+                        else {
+                            ros::Duration(1).sleep();
+                            sec_to_wait--;
+                        }
+                    }
+                    /*
+                    malish::Lift lift_msg;
+                    lift_msg.dio1 = False;
+                    lift_msg.dio2 = True;
+                    lift_msg.dio3 = True;
+                    pub_lift.publish(lift_msg);
+                     */
+
+                    ros::Duration(3).sleep();
+                }
             }
+            else {
+                ROS_INFO("The robot failed to move to goal %d for some reason", curr_goal + 1);
+                retry++;
+                ros::Duration(10).sleep();
+            }
+        }while((ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) || _gogogo);
 
-        }
-        else
-            ROS_INFO("The robot failed to move to goal %d for some reason", i+1);
-    }
-
+        curr_goal++;
+    }//for num_of_goal
 }
 
 void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &params)
@@ -159,3 +190,8 @@ void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &par
 }
 
 void GoalSender::preemtCallback() {}
+
+void GoalSender::cmdCallback(const malish::JoyCMD& message) {
+    _gogogo = message.gogogo;
+    _restart = message.restart;
+}
