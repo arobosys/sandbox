@@ -1,6 +1,7 @@
 #include <map>
 #include <unordered_map>
 #include "GoalSender.hpp"
+#include <math.h>
 //#include <malish/Lift.h>
 // #include </home/zhuhua/AGRO/catkin_ws/src/malish/devel/include/malish/Lift.h>
 
@@ -111,38 +112,42 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
         goal.target_pose.pose.position.x = goalToMove[i][0];
         goal.target_pose.pose.position.y = goalToMove[i][1];
 
-        double radians=goalToMove[i][2]*(3.1415916/180);
+        double radians=goalToMove[i][2]*(M_PI/180.0);
         tf::Quaternion quaternion;
         quaternion = tf::createQuaternionFromYaw(radians);
         geometry_msgs::Quaternion qMsg;
         tf::quaternionTFToMsg(quaternion,qMsg);
         goal.target_pose.pose.orientation= qMsg;
 
-        ROS_INFO("Sending goal %d to move_base",i+1);
-        ac.sendGoal(goal);
+        int retry = 0;
+        do {
+            if(retry)
+                ROS_INFO("Retry #%d sending a goal %d to move_base", retry,i + 1);
+            ROS_INFO("Sending goal %d to move_base", i + 1);
+            ac.sendGoal(goal);
 
-        ac.waitForResult();
+            ac.waitForResult();
 
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-            ROS_INFO("Malish, the robot moved to goal %d", i + 1);
-            if(i==3)
-            {
-                /*
-                malish::Lift lift_msg;
-                lift_msg.dio1 = False;
-                lift_msg.dio2 = True;
-                lift_msg.dio3 = True;
-                pub_lift.publish(lift_msg);
-                 */
-                ROS_INFO("I am unloading");
-                ros::Duration(3).sleep();
-            }
+            if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+                ROS_INFO("Malish, the robot moved to goal %d", i + 1);
+                if (i == 3) {
+                    /*
+                    malish::Lift lift_msg;
+                    lift_msg.dio1 = False;
+                    lift_msg.dio2 = True;
+                    lift_msg.dio3 = True;
+                    pub_lift.publish(lift_msg);
+                     */
+                    ROS_INFO("I am unloading");
+                    ros::Duration(3).sleep();
+                }
 
-        }
-        else
-            ROS_INFO("The robot failed to move to goal %d for some reason", i+1);
-    }
+            } else
+                ROS_INFO("The robot failed to move to goal %d for some reason", i + 1);
+            retry++;
+            ros::Duration(10).sleep();
+        }while((ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED));
+    }//for num_of_goal
 
 }
 
