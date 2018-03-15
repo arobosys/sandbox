@@ -1,3 +1,4 @@
+#include <ros/ros.h>
 #include "GoalSender.hpp"
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 

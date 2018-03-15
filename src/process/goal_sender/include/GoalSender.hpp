@@ -1,3 +1,5 @@
+#ifndef __GOALSENDER_CLASS_
+#define __GOALSENDER_CLASS_
 
 #include <ros/ros.h>
 #include <std_msgs/String.h>
@@ -6,7 +8,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf/tf.h>
 #include <geometry_msgs/Quaternion.h>
-#include <malish/Lift.h>
+#include <malish/JoyCMD.h>
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
@@ -23,7 +25,8 @@ class GoalSender {
     const std::string GOAL7 = "2d_goal7";
 
     int num_goal;
-
+    ros::Subscriber pub_CMD;
+    bool _gogogo, _restart;
 
     std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
 
@@ -32,6 +35,8 @@ class GoalSender {
     void preemtCallback();
 
     void parseTransforms(const std::map<std::string, std::string> &keyToValue);
+
+    void cmdCallback(const malish::JoyCMD& message);
 
 
 public:
@@ -42,3 +47,4 @@ public:
 
 };
 
+#endif //__GOALSENDER_CLASS_
