@@ -217,5 +217,26 @@ export ROS_MASTER_URI=http://IP_OF_YOUR_MASTER!!!:11311
 rviz
 ``` 
 
+Build on Odroid (variant)
+catkin_make -DCATKIN_BLACKLIST_PACKAGES="buggy_2dnav;kernel;process;command_interpreter;core_msgs;options_tool;process_layer;console_node;logic_layer;process_interface;tiny_process;zed_ros_wrapper"
 
+
+## Change submodules dependency 
+```bash
+$ git submodule deinit -f src/zed-ros-wrapper
+```
+## Write link to wrapper  
+```bash
+$ nano .gitmodules  
+```
+
+# The following:  
+[submodule "src/zed-ros-wrapper"]
+        path = src/zed-ros-wrapper
+        url = https://github.com/arobosys/zed-ros-wrapper
+
+# Then
+```bash
+$ git submodule update --init --recursive
+```
 
