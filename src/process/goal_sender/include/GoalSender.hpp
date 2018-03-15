@@ -6,6 +6,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf/tf.h>
 #include <geometry_msgs/Quaternion.h>
+#include <malish/Lift.h>
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 

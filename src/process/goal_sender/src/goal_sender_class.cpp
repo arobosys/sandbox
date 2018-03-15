@@ -129,6 +129,7 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
             ac.waitForResult();
 
             if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+        {
                 ROS_INFO("Malish, the robot moved to goal %d", i + 1);
                 if (i == 3) {
                     /*
@@ -140,6 +141,8 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
                      */
                     ROS_INFO("I am unloading");
                     ros::Duration(3).sleep();
+
+        }
                 }
 
             } else
