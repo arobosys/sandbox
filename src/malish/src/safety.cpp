@@ -31,7 +31,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <opencv2/core/core.hpp>
 
-//#define __DEBUG__ 1
+// #define __DEBUG__ 1
 const static int __DEBUG__ = 1;
 
 /// Robot's width, [m].
@@ -45,55 +45,137 @@ static const float yellow_margin = 1.25;
 /// Maximal sonar distance.
 static const float sonar_max_phisical = 1.03;
 static const float sonar_max = 1.0;
-static const float sonar_alert_front = 0.85;
-static const float sonar_alert_bckg = 0.10;
+static const float sonar_alert_front = 0.75;
+static const float sonar_alert_bckg = 0.15;
 /// Constant for comparision with float type zero value.
 static const float eps = 1e-10;
+static const unsigned int queue_size = 10;
 
+// enum sonars_flag {
+static const unsigned char RESET = 0;
+static const unsigned char FRONT_YELLOW = 1;
+static const unsigned char FRONT_RED = 2;
+static const unsigned char RIGHT_YELLOW = 4;
+static const unsigned char RIGHT_RED = 8;
+static const unsigned char REAR_YELLOW = 16;
+static const unsigned char REAR_RED = 32;
+static const unsigned char LEFT_YELLOW = 64;
+static const unsigned char LEFT_RED = 128;
+static const unsigned char ANY_YELLOW = 85;
+static const unsigned char ANY_RED = 170;
+// };
 
-void set_red(malish::Diode & msg) {
-	msg.red = 255;
-	msg.green = 0;
-	msg.blue = 0;
+enum LED_state {
+  NONE = 0,
+  WHITE = 1,
+  YELLOW = 2,
+  RED = 3
+};
+
+unsigned char ToggleNthBit(unsigned char num, unsigned char n) {
+  if(num & (1 << n))
+    num &= ~(1 << n);
+  else
+    num |= (1 << n);
+
+  return num;
 }
 
-void set_yellow(malish::Diode & msg) {
-	msg.red = 255;
-	msg.green = 127;
-	msg.blue = 0;
+unsigned char set_nth_bit(unsigned char num, unsigned char n) {
+
+    return (num | 1 << n);
+}
+
+unsigned char clear_nth_bit(unsigned char num, unsigned char n) {
+
+    return (num & ~( 1 << n));
+}
+
+unsigned char toggle_nth_bit(unsigned char num, unsigned char n) {
+
+    return num ^ (1 << n);
+}
+
+unsigned char check_nth_bit(unsigned char num, unsigned char n) {
+
+    return num & (1 << n);
+}
+
+
+bool check_mask(unsigned int const& mask, unsigned char flag) {
+  unsigned int check_mask = 0;
+  check_mask = mask & flag;
+
+  return check_mask > 0 ? true : false;
+}
+
+void set_mask(unsigned char *mask, unsigned char flag) {
+  *mask |= flag;
+}
+
+void reset_front(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 1);
+  *mask = clear_nth_bit(*mask, 0);
+}
+
+void reset_right(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 3);
+  *mask = clear_nth_bit(*mask, 2);
+}
+
+void reset_rear(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 5);
+  *mask = clear_nth_bit(*mask, 4);
+}
+
+void reset_left(unsigned char *mask) {
+  *mask = clear_nth_bit(*mask, 7);
+  *mask = clear_nth_bit(*mask, 6);
+}
+
+void set_red_LED(malish::Diode & msg) {
+  msg.red = 255;
+  msg.green = 0;
+  msg.blue = 0;
+}
+
+void set_yellow_LED(malish::Diode & msg) {
+  msg.red = 255;
+  msg.green = 127;
+  msg.blue = 0;
 }
 
 void reset_LED(malish::Diode & msg) {
-	msg.red = 0;
-	msg.green = 0;
-	msg.blue = 0;
+  msg.red = 0;
+  msg.green = 0;
+  msg.blue = 0;
 }
 
 // Returns mean of N elements
 float push_and_mean_list(std::list<float> & queue, float val, float max_val, unsigned int size=5) {
-	static unsigned int qsize = size;
-	float mean = 0.0;
+  static unsigned int qsize = size;
+  float mean = 0.0;
 
-	if(queue.size() == qsize) {
-		queue.pop_front();
-	} else if (queue.size() > qsize) {
-		while(queue.size() > qsize) {
-			queue.pop_front();
-		}
-	}
+  if(queue.size() == qsize) {
+    queue.pop_front();
+  } else if (queue.size() > qsize) {
+    while(queue.size() > qsize) {
+      queue.pop_front();
+    }
+  }
 
-	queue.push_back(val);
+  queue.push_back(val);
 
-	for (std::list<float>::iterator it=queue.begin(); it != queue.end(); ++it) {
-		mean += *it;
-	}
+  for (std::list<float>::iterator it=queue.begin(); it != queue.end(); ++it) {
+    mean += *it;
+  }
 
-	mean = mean / queue.size();
+  mean = mean / queue.size();
 
-	if(queue.size() < size)
-	    mean = max_val;
+  if(queue.size() < size)
+    mean = max_val;
 
-	return mean;
+  return mean;
 }
 
 /**
@@ -105,269 +187,480 @@ float push_and_mean_list(std::list<float> & queue, float val, float max_val, uns
 class Safety {
   public:;
     Safety() {
-        ros::NodeHandle nh_;
-        safety_pub_ = nh_.advertise<malish::Obstacle>("/safety", 10);
-        led_pub_ = nh_.advertise<malish::Diode>("/led", 10);
+      ros::NodeHandle nh_;
+      safety_pub_ = nh_.advertise<malish::Obstacle>("/safety", 10);
+      led_pub_ = nh_.advertise<malish::Diode>("/led", 10);
 
-        // Subscribe to Sonar's data.
-        front_sonar_sub_ = nh_.subscribe("/sonar/front", 10, &Safety::frontSonarCallback, this);
-        // rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rearSonarCallback, this);
-        // left_sonar_sub_ = nh_.subscribe("/sonar/left", 10, &Safety::leftSonarCallback, this);
-        // right_sonar_sub_ = nh_.subscribe("/sonar/right", 10, &Safety::rightSonarCallback, this);
+      // Subscribe to Sonar's data.
+      front_sonar_sub_ = nh_.subscribe("/sonar/front", 10, &Safety::frontSonarCallback, this);
+      rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rearSonarCallback, this);
+      left_sonar_sub_ = nh_.subscribe("/sonar/left", 10, &Safety::leftSonarCallback, this);
+      right_sonar_sub_ = nh_.subscribe("/sonar/right", 10, &Safety::rightSonarCallback, this);
 
-        // Init messages.
-        safety_msg_.timestamp = ros::Time::now();
-        safety_msg_.alert = false;
+      // Init messages.
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
 
-        safety_msg_.pos.orientation.w = 0.0;
-        safety_msg_.pos.orientation.x = 0.0;
-        safety_msg_.pos.orientation.y = 0.0;
-        safety_msg_.pos.orientation.z = 0.0;
+      safety_msg_.pos.orientation.w = 0.0;
+      safety_msg_.pos.orientation.x = 0.0;
+      safety_msg_.pos.orientation.y = 0.0;
+      safety_msg_.pos.orientation.z = 0.0;
 
-        safety_msg_.pos.position.x = 0.0;
-        safety_msg_.pos.position.y = 0.0;
-        safety_msg_.pos.position.z = 0.0;
+      safety_msg_.pos.position.x = 0.0;
+      safety_msg_.pos.position.y = 0.0;
+      safety_msg_.pos.position.z = 0.0;
 
-        led_msg_.red = 0;
-        led_msg_.green = 0;
-        led_msg_.blue = 0;
+      led_msg_.red = 0;
+      led_msg_.green = 0;
+      led_msg_.blue = 0;
 
-        sonar_alarm = false;
-        sonar_yellow = false;
+      sonar_alarm = false;
+      sonar_yellow = false;
+      mask = 0; // 0000 0000
+      // 00 - white blink;
+      // 01 - yellow blink;
+      // 10 or 11 - reb blink
     }
 
-  void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+    void message_sender() {
+      static unsigned char prev_state = NONE;
+      if (state != prev_state) {
+        safety_msg_.timestamp = ros::Time::now();
+        if(check_mask(mask, ANY_RED)) {
+          safety_msg_.alert = true;
+          set_red_LED(led_msg_);
+          safety_pub_.publish(safety_msg_);
+          led_pub_.publish(led_msg_);
+        } else if(check_mask(mask, ANY_YELLOW)) {
+          safety_msg_.alert = false;
+          set_yellow_LED(led_msg_);
+          safety_pub_.publish(safety_msg_);
+          led_pub_.publish(led_msg_);
+        } else {
+          safety_msg_.alert = false;
+          reset_LED(led_msg_);
+          safety_pub_.publish(safety_msg_);
+          led_pub_.publish(led_msg_);
+        }
+      }
+    }
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
+    void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+      static std::list<float> range_list;
 
-	  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
 
-	  if (mean > sonar_alert_front && mean < sonar_max) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-	  } else if(mean < sonar_alert_front) {
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = true;
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-		  set_red(led_msg_);
+      if (mean > sonar_alert_front && mean < sonar_max) {
+        // Set color
+        set_yellow_LED(led_msg_);
+        // Set mask
+        set_mask(&mask, FRONT_YELLOW);
+        // Set state
+        state = RED;
+        // Send mesage
+        message_sender();
+      } else if(mean < sonar_alert_front) {
+        // Set color
+        set_red_LED(led_msg_);
 
-		  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+        // Set mask
+        set_mask(&mask, FRONT_RED);
 
-		  sonar_alarm = true;
-		  sonar_yellow = false;
-	      safety_pub_.publish(safety_msg_);
-	      led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm == true){
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_yellow == true){
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else {
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-	  }
-  }
+        // Set state
+        if (!check_mask(mask, ANY_RED)) {
+          state = YELLOW;
+        }
+        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-  /*void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+        // Send mesage
+        message_sender();
+      } else {
+        // Set state
+        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
+          state = WHITE;
+        }
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
+        // Reset mask
+        reset_front(&mask);
 
-	  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
+        // Send message
+        message_sender();
+      }
+    }
 
-	  if (mean > sonar_alert_bckg && mean < sonar_max) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-	  } else if(mean < sonar_alert_bckg) {
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = true;
+    void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+      static std::list<float> range_list;
 
-		  set_red(led_msg_);
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
 
-		  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-		  sonar_alarm = true;
-		  sonar_yellow = false;
-	      safety_pub_.publish(safety_msg_);
-	      led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm == true){
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_yellow == true){
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else {
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-	  }
-  }
+      if (mean > sonar_alert_bckg && mean < sonar_max) {
+        // Set color
+        set_yellow_LED(led_msg_);
+        // Set mask
+        set_mask(&mask, REAR_YELLOW);
+        // Set state
+        state = RED;
+        // Send mesage
+        message_sender();
+      } else if(mean < sonar_alert_bckg) {
+        // Set color
+        set_red_LED(led_msg_);
 
-  void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+        // Set mask
+        set_mask(&mask, REAR_RED);
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
+        // Set state
+        if (!check_mask(mask, ANY_RED)) {
+          state = YELLOW;
+        }
+        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-	  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+        // Send mesage
+        message_sender();
+      } else {
+        // Set state
+        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
+          state = WHITE;
+        }
 
-	  if (mean > sonar_alert_bckg && mean < sonar_max) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-	  } else if(mean < sonar_alert_bckg) {
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = true;
+        // Reset mask
+        reset_rear(&mask);
 
-		  set_red(led_msg_);
+        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
+        // Send message
+        message_sender();
+      }
+    }
 
-		  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+    void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+      static std::list<float> range_list;
 
-		  sonar_alarm = true;
-		  sonar_yellow = false;
-	      safety_pub_.publish(safety_msg_);
-	      led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm == true){
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_yellow == true){
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else {
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-	  }
-  }
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
 
-  void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
+      if (mean > sonar_alert_bckg && mean < sonar_max) {
+        // Set color
+        set_yellow_LED(led_msg_);
+        // Set mask
+        set_mask(&mask, RIGHT_YELLOW);
+        // Set state
+        state = RED;
+        // Send mesage
+        message_sender();
+      } else if(mean < sonar_alert_bckg) {
+        // Set color
+        set_red_LED(led_msg_);
 
-	  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+        // Set mask
+        set_mask(&mask, RIGHT_RED);
 
-	  if (mean > sonar_alert_bckg && mean < sonar_max) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-	  } else if(mean < sonar_alert_bckg) {
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = true;
+        // Set state
+        if (!check_mask(mask, ANY_RED)) {
+          state = YELLOW;
+        }
+        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
 
-		  set_red(led_msg_);
+        // Send mesage
+        message_sender();
+      } else {
+        // Set state
+        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
+          state = WHITE;
+        }
 
-		  ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+        // Reset mask
+        reset_right(&mask);
 
-		  sonar_alarm = true;
-		  sonar_yellow = false;
-	      safety_pub_.publish(safety_msg_);
-	      led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm == true){
-		  sonar_alarm = false;
-		  sonar_yellow = true;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_yellow == true){
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-		  safety_pub_.publish(safety_msg_);
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else {
-		  sonar_alarm = false;
-		  sonar_yellow = false;
-		  safety_msg_.timestamp = ros::Time::now();
-		  safety_msg_.alert = false;
-	  }
+        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
+        // Send message
+        message_sender();
+      }
+    }
+
+    void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+      static std::list<float> range_list;
+
+      float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, queue_size);
+
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+      if (mean > sonar_alert_bckg && mean < sonar_max) {
+        // Set color
+        set_yellow_LED(led_msg_);
+        // Set mask
+        set_mask(&mask, LEFT_YELLOW);
+        // Set state
+        state = RED;
+        // Send mesage
+        message_sender();
+      } else if(mean < sonar_alert_bckg) {
+        // Set color
+        set_red_LED(led_msg_);
+
+        // Set mask
+        set_mask(&mask, LEFT_RED);
+
+        // Set state
+        if (!check_mask(mask, ANY_RED)) {
+          state = YELLOW;
+        }
+        ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+        // Send mesage
+        message_sender();
+      } else {
+        // Set state
+        if (!check_mask(mask, ANY_RED) && !check_mask(mask, ANY_YELLOW)) {
+          state = WHITE;
+        }
+
+        // Reset mask
+        reset_left(&mask);
+
+        ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
+        // Send message
+        message_sender();
+      }
+    }
+
+  /*void frontSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+    static std::list<float> range_list;
+
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
+
+    ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+    if (mean > sonar_alert_front && mean < sonar_max) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+      sonar_alarm = false;
+      sonar_yellow = true;
+    } else if(mean < sonar_alert_front) {
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = true;
+
+      set_red_LED(led_msg_);
+
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+      sonar_alarm = true;
+      sonar_yellow = false;
+        safety_pub_.publish(safety_msg_);
+        led_pub_.publish(led_msg_);
+    } else if(sonar_alarm == true){
+      sonar_alarm = false;
+      sonar_yellow = true;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_yellow == true){
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else {
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+    }
   }*/
 
   /*void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+    static std::list<float> range_list;
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
 
-	  if (mean < sonar_max && !sonar_alarm) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm != true) {
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  }
+    ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+    if (mean > sonar_alert_bckg && mean < sonar_max) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+      sonar_alarm = false;
+      sonar_yellow = true;
+    } else if(mean < sonar_alert_bckg) {
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = true;
+
+      set_red_LED(led_msg_);
+
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+      sonar_alarm = true;
+      sonar_yellow = false;
+        safety_pub_.publish(safety_msg_);
+        led_pub_.publish(led_msg_);
+    } else if(sonar_alarm == true){
+      sonar_alarm = false;
+      sonar_yellow = true;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_yellow == true){
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else {
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+    }
   }
 
   void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+    static std::list<float> range_list;
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
 
-	  if (mean < sonar_max && !sonar_alarm) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm != true) {
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  }
+    ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+    if (mean > sonar_alert_bckg && mean < sonar_max) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+      sonar_alarm = false;
+      sonar_yellow = true;
+    } else if(mean < sonar_alert_bckg) {
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = true;
+
+      set_red_LED(led_msg_);
+
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+      sonar_alarm = true;
+      sonar_yellow = false;
+        safety_pub_.publish(safety_msg_);
+        led_pub_.publish(led_msg_);
+    } else if(sonar_alarm == true){
+      sonar_alarm = false;
+      sonar_yellow = true;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_yellow == true){
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else {
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+    }
   }
 
   void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
-	  static std::list<float> range_list;
+    static std::list<float> range_list;
 
-	  float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, sonar_max, 5);
 
-	  if (mean < sonar_max && !sonar_alarm) {
-		  set_yellow(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  } else if(sonar_alarm != true) {
-		  reset_LED(led_msg_);
-		  led_pub_.publish(led_msg_);
-	  }
+    ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+    if (mean > sonar_alert_bckg && mean < sonar_max) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+      sonar_alarm = false;
+      sonar_yellow = true;
+    } else if(mean < sonar_alert_bckg) {
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = true;
+
+      set_red_LED(led_msg_);
+
+      ROS_INFO_COND(__DEBUG__ > 0, "front sonar mean range %f", mean);
+
+      sonar_alarm = true;
+      sonar_yellow = false;
+        safety_pub_.publish(safety_msg_);
+        led_pub_.publish(led_msg_);
+    } else if(sonar_alarm == true){
+      sonar_alarm = false;
+      sonar_yellow = true;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_yellow == true){
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+      safety_pub_.publish(safety_msg_);
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else {
+      sonar_alarm = false;
+      sonar_yellow = false;
+      safety_msg_.timestamp = ros::Time::now();
+      safety_msg_.alert = false;
+    }
+  }*/
+
+  /*void rearSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+    static std::list<float> range_list;
+
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+
+    if (mean < sonar_max && !sonar_alarm) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_alarm != true) {
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    }
+  }
+
+  void leftSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+    static std::list<float> range_list;
+
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+
+    if (mean < sonar_max && !sonar_alarm) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_alarm != true) {
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    }
+  }
+
+  void rightSonarCallback (sensor_msgs::Range const& std_sonar_msg) {
+    static std::list<float> range_list;
+
+    float mean = push_and_mean_list(range_list, std_sonar_msg.range, 5);
+
+    if (mean < sonar_max && !sonar_alarm) {
+      set_yellow_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    } else if(sonar_alarm != true) {
+      reset_LED(led_msg_);
+      led_pub_.publish(led_msg_);
+    }
   }*/
 
   protected:;
@@ -382,17 +675,25 @@ class Safety {
     malish::Diode led_msg_;
     bool sonar_alarm;
     bool sonar_yellow;
+    unsigned char mask;
+    unsigned char state;
+    // uint32_t cur_timer;
 };
 
 int main(int argc, char **argv)
 {
-    printf("Hello, ROS1!");
+  /*printf("Hello, ROS1!");
 
-    ros::init(argc, argv, "safety_node");
+  unsigned char mask = 3;
+  mask = clear_nth_bit(mask, 0);
+  ROS_INFO_COND(__DEBUG__ > 0, "mask after reset %d", mask);
+  getchar();*/
 
-    ROS_INFO("Hello, ROS!");
+  ros::init(argc, argv, "safety_node");
 
-    Safety safety_checker;
+  ROS_INFO("Hello, ROS!");
 
-    ros::spin();
+  Safety safety_checker;
+
+  ros::spin();
 }
