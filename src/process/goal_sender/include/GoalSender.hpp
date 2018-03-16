@@ -25,7 +25,7 @@ class GoalSender {
     const std::string GOAL7 = "2d_goal7";
 
     int num_goal;
-    ros::Subscriber pub_CMD;
+    ros::Subscriber joystik;
     bool _gogogo, _restart;
 
     std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
@@ -36,7 +36,7 @@ class GoalSender {
 
     void parseTransforms(const std::map<std::string, std::string> &keyToValue);
 
-    void cmdCallback(const malish::JoyCMD& message);
+    void cmdCallback(const malish::JoyCMD &message);
 
 
 public:
