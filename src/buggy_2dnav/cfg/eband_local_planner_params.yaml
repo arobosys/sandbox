@@ -5,7 +5,7 @@ EBandPlannerROS:
  max_acceleration: 0.5
 
 # velocity limits
- max_vel_lin: 0.6
+ max_vel_lin: 0.8
  max_vel_th: 0.8
  min_vel_lin: 0.1
  min_vel_th: 0.0
@@ -13,7 +13,7 @@ EBandPlannerROS:
  in_place_trans_vel: 0.0
 
 # goal tolerance
- xy_goal_tolerance: 0.05
+ xy_goal_tolerance: 0.08
  yaw_goal_tolerance: 0.04
 
 # angular velocity PID
