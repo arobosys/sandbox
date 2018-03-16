@@ -23,6 +23,7 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <malish/Obstacle.h>
 #include <malish/Diode.h>
+#include <malish/JoyCMD.h>
 #include <sensor_msgs/Range.h>
 
 // OpenCV
@@ -163,7 +164,7 @@ float push_and_mean_list(std::list<float> & queue, float val, float max_val, uns
 
   queue.push_back(val);
 
-  for (std::list<float>::iterator it=queue.begin(); it != queue.end(); ++it) {
+  for (std::list<float>::iterator it = queue.begin(); it != queue.end(); ++it) {
     mean += *it;
   }
 
@@ -193,6 +194,7 @@ class Safety {
       rear_sonar_sub_ = nh_.subscribe("/sonar/rear", 10, &Safety::rearSonarCallback, this);
       left_sonar_sub_ = nh_.subscribe("/sonar/left", 10, &Safety::leftSonarCallback, this);
       right_sonar_sub_ = nh_.subscribe("/sonar/right", 10, &Safety::rightSonarCallback, this);
+      safety_toggle_sub_ = nh_.subscribe("/malish/safety_toggle", 10, &Safety::safetyToggleCallback, this);
 
       // Init messages.
       safety_msg_.timestamp = ros::Time::now();
@@ -211,6 +213,7 @@ class Safety {
       led_msg_.green = 0;
       led_msg_.blue = 0;
 
+      suspend_node = false;
       sonar_alarm = false;
       sonar_yellow = false;
       mask = 0; // 0000 0000
@@ -221,7 +224,7 @@ class Safety {
 
     void message_sender() {
       static unsigned char prev_state = NONE;
-      if (state != prev_state) {
+      if (state != prev_state && !suspend_node) {
         safety_msg_.timestamp = ros::Time::now();
         if(check_mask(mask, ANY_RED)) {
           safety_msg_.alert = true;
@@ -239,6 +242,17 @@ class Safety {
           safety_pub_.publish(safety_msg_);
           led_pub_.publish(led_msg_);
         }
+      }
+    }
+
+    void safetyToggleCallback(malish::JoyCMD const& joy_msg) {
+      static bool toggle = false;
+      if(joy_msg.safety_toggle) {
+    	if(!toggle) {
+          suspend_node = true;
+    	} else {
+    	  suspend_node = false;
+    	}
       }
     }
 
@@ -434,6 +448,7 @@ class Safety {
     ros::Subscriber rear_sonar_sub_;
     ros::Subscriber left_sonar_sub_;
     ros::Subscriber right_sonar_sub_;
+    ros::Subscriber safety_toggle_sub_;
 
     malish::Obstacle safety_msg_;
     malish::Diode led_msg_;
@@ -441,6 +456,7 @@ class Safety {
     bool sonar_yellow;
     unsigned char mask;
     unsigned char state;
+    bool suspend_node;
 };
 
 int main(int argc, char **argv)

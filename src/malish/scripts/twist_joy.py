@@ -34,11 +34,11 @@ flag_no_cmd = False;
 
 lift = False;
 alert = False;
-gogogo_prev = False;
+safe_toggle_prev = False;
 restart_prev = False;
 
 def callback(data):
-    global pub, t1, flag_no_cmd, pub_lift, gogogo_prev, restart_prev
+    global pub, t1, flag_no_cmd, pub_lift, safe_toggle_prev, restart_prev
 
     #Dead zone constant
     thresh = 0.15
@@ -54,14 +54,14 @@ def callback(data):
     throttle = data.buttons[0]
     lifter = data.buttons[4]
     unlifter = data.buttons[5]
-    gogogo = data.buttons[1]
+    safe_toggle = data.buttons[1]
     restart = data.buttons[2]
     joy_cmd = JoyCMD()
 
-    if (gogogo==1):
-    	joy_cmd.gogogo = True
+    if (safe_toggle==1):
+    	joy_cmd.safety_toggle = True
     else:
-    	joy_cmd.gogogo = False
+    	joy_cmd.safety_toggle = False
 
     if (restart==1):
     	joy_cmd.restart = True
@@ -69,10 +69,10 @@ def callback(data):
     	joy_cmd.restart = False
     
     #pub.publish(joy cmd)
-    if (gogogo!=gogogo_prev) or(restart!=restart_prev):
+    if (safe_toggle!=safe_toggle_prev) or(restart!=restart_prev):
     	pub_command.publish(joy_cmd)
 
-    gogogo_prev = bool(gogogo)
+    safe_toggle_prev = bool(safe_toggle)
     restart_prev = bool(restart) 
 
     flag_no_cmd = bool(data.buttons[3])
