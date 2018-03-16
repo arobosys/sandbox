@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>logic_layer</name>
+  <version>0.0.0</version>
+  <description>The scenario_executor package</description>
+  <maintainer email="vladislav@todo.todo">vladislav</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>core_msgs</build_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>core_msgs</run_depend>
+  <build_depend>options_tool</build_depend>
+  <run_depend>options_tool</run_depend>
+</package>

@@ -1,0 +1,6 @@
+<launch>
+  <node name="command_interpreter" pkg="command_interpreter" type="command_interpreter" output="screen" />
+  <node name="scenario_execserver" pkg="logic_layer" type="scenario_execserver" output="screen" />
+  <node name="techmap_execserver" pkg="logic_layer" type="techmap_execserver" output="screen" />
+  <node name="process_layer" pkg="process_layer" type="process_layer" output="screen" />
+</launch>

@@ -1,3 +1,3 @@
-bool dio1
-bool dio2
-bool dio3 
+int16 red
+int16 green
+int16 blue
