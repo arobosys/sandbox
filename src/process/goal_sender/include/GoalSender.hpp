@@ -25,8 +25,6 @@ class GoalSender {
     const std::string GOAL7 = "2d_goal7";
 
     int num_goal;
-    ros::Subscriber joystik;
-    bool _gogogo, _restart;
 
     std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
 

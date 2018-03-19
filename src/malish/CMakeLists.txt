@@ -33,6 +33,7 @@ generate_messages(
   std_msgs
 )
 catkin_package(
+   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS message_runtime xmlrpcpp
 )
 include_directories(

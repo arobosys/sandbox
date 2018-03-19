@@ -10,3 +10,5 @@ src/rosserial*
 *src/cmake-build-debug/*
 testcases_gen.h
 *.kate-swp
+
+cmake-build-debug

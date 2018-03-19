@@ -2,27 +2,31 @@ cmake_minimum_required(VERSION 2.8.3)
 project(joy_process)
 set(CMAKE_CXX_FLAGS "-std=c++14")
 
-#add_dependencies(process_interface)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  process_interface
-  geometry_msgs
-  tf
-  move_base_msgs
-  actionlib
+  message_generation
 )
 
-catkin_package()
-include_directories(${catkin_INCLUDE_DIRS} include)
+#find_package(malish)
 
-#add_library(joy_sender STATIC
-#        include/joy_process.hpp src/joy_sender_class.cpp)
+#link_directories(${catkin_LIBRARY_DIRS})
+
+#add_message_files(FILES JoyCMD.msg)
+
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs
+  DEPENDS roscpp
+    malish
+)
+
+#include_directories(${catkin_INCLUDE_DIRS} include)
+#add_library(joy_process_class STATIC
+#        include/joy_process_class.hpp src/joy_process_class.cpp)
 
 #add_executable(joy_process src/main.cpp)
 
-#target_link_libraries(joy_process ${catkin_LIBRARIES})
-#target_link_libraries(joy_process joy_sender_class)
+
+#target_link_libraries(joy_process joy_process_class ${catkin_LIBRARIES})
 
 

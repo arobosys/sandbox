@@ -3,20 +3,10 @@
 #include "GoalSender.hpp"
 #include <math.h>
 #include <malish/JoyCMD.h>
-// #include </home/zhuhua/AGRO/catkin_ws/src/malish/devel/include/malish/Lift.h>
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
     num_goal = 7;
-    _gogogo = false;
-    _restart = false;
 
-	ros::NodeHandle nh_;
-
-    joystik = nh_.subscribe("/joy/command", 10, &GoalSender::cmdCallback, this);
-	if(!joystik)
-		ROS_WARN("Cannot connect to joystik topic");
-
-    //pub_lift = handle.advertise<Malish::Lift>("/lift", 10,cmdCallback());
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
                        std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
                        std::bind(&GoalSender::preemtCallback,this));
@@ -154,12 +144,13 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
 
                     while (sec_to_wait) {
                         ROS_INFO("Wait %d seconds", sec_to_wait);
-                        if (_gogogo)
+                 /*       if (_gogogo)
                             sec_to_wait = 0;
                         else {
                             ros::Duration(1).sleep();
                             sec_to_wait--;
                         }
+                        */
                     }
                     /*
                     malish::Lift lift_msg;
@@ -177,13 +168,13 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
                 retry++;
                 ros::Duration(5).sleep();
             }
-        }while((ac.getState() != actionlib::SimpleClientGoalState::SUCCEEDED) || _gogogo);
+        }while((ac.getState() != actionlib::SimpleClientGoalState::SUCCEEDED) );// || _gogogo
 
         curr_goal++;
     }//for num_of_goal
-	ROS_INFO("The robot completed task.  Reset %d", _restart);
-	if(_restart == true)
-            curr_goal = 0;
+//	ROS_INFO("The robot completed task.  Reset %d", _restart);
+//	if(_restart == true)
+//            curr_goal = 0;
   }while(1);
 }
 
@@ -201,8 +192,3 @@ void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &par
 
 void GoalSender::preemtCallback() {}
 
-void GoalSender::cmdCallback(const malish::JoyCMD &message) {
-    _gogogo = message.gogogo;
-    _restart = message.restart;
-	ROS_INFO("JoyCMD: gogogo %d reset %d", _gogogo , _restart);
-}
