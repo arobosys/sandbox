@@ -42,7 +42,7 @@ static const float robot_length = 0.65;
 static const float sonar_max_phisical = 1.03;
 static const float sonar_max = 1.0;
 static const float sonar_max_front = 1.0;
-static const float sonar_alert_front = 0.75;
+static const float sonar_alert_front = 0.55;
 static const float sonar_alert_bckg = 0.15;
 /// Constant for comparision with float type zero value.
 static const float eps = 1e-10;
