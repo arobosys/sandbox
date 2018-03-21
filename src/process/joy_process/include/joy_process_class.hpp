@@ -9,11 +9,21 @@ class JoyProcess{
 
     ros::Subscriber joystik;
     bool _gogogo, _restart;
+    int _mode;
+
+
   
 public:
+    typedef std::function<void()> FeedbackHandler;
+
     /**
      * Class constructor
      */
     JoyProcess(ros::NodeHandle &handle, int argc, char **argv);
+    void SetFeedback(FeedbackHandler feedbackHandler);
+    int setmode(int mode);
+
+private:
+    FeedbackHandler feedbackHandler;
 };
 

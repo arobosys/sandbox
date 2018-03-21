@@ -12,3 +12,10 @@ testcases_gen.h
 *.kate-swp
 
 cmake-build-debug
+build
+install
+.catkin_tools
+logs
+.idea
+.project
+.cproject
