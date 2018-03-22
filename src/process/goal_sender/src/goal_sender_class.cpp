@@ -2,7 +2,6 @@
 #include <unordered_map>
 #include "GoalSender.hpp"
 #include <math.h>
-#include <malish/JoyCMD.h>
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
     num_goal = 7;
