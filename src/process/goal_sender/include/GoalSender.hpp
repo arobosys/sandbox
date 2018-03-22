@@ -8,7 +8,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf/tf.h>
 #include <geometry_msgs/Quaternion.h>
-#include <malish/JoyCMD.h>
+// #include <malish/JoyCMD.h>
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
@@ -34,7 +34,7 @@ class GoalSender {
 
     void parseTransforms(const std::map<std::string, std::string> &keyToValue);
 
-    void cmdCallback(const malish::JoyCMD &message);
+    // void cmdCallback(const malish::JoyCMD &message);
 
 
 public:
