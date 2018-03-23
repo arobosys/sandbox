@@ -4,13 +4,13 @@
 #include <math.h>
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
-    num_goal = 7;
-
+    /*
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
                        std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
                        std::bind(&GoalSender::preemtCallback,this));
 
     rosLinkClientPtr->listen();
+    */
 }
 
 template<typename T>
@@ -29,59 +29,19 @@ std::vector<double> splitByDelimiter(const std::string &s, char delim) {
 
 void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyToValue) {
 
-    std::string goal1_string = keyToValue.at(GOAL1);
-    std::string goal2_string = keyToValue.at(GOAL2);
-    std::string goal3_string = keyToValue.at(GOAL3);
-    std::string goal4_string = keyToValue.at(GOAL4);
-    std::string goal5_string = keyToValue.at(GOAL5);
-    std::string goal6_string = keyToValue.at(GOAL6);
-    std::string goal7_string = keyToValue.at(GOAL7);
+    //std::string goal1_string = keyToValue.at(GOAL1);
+
 
     double goalToMove[num_goal][3];
 
-    std::vector<double> goal = splitByDelimiter<double>(goal1_string, ';');
+    /*std::vector<double> goal = splitByDelimiter<double>(goal1_string, ';');
     ROS_INFO("From logic layer I get 2d_goal1: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
     goalToMove[0][0]=goal[0];
     goalToMove[0][1]=goal[1];
     goalToMove[0][2]=goal[2];
 
-    goal = splitByDelimiter<double>(goal2_string, ';');
-    ROS_INFO("From logic layer I get 2d_goal2: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
-    goalToMove[1][0]=goal[0];
-    goalToMove[1][1]=goal[1];
-    goalToMove[1][2]=goal[2];
 
-    goal = splitByDelimiter<double>(goal3_string, ';');
-    ROS_INFO("From logic layer I get 2d_goal3: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
-    goalToMove[2][0]=goal[0];
-    goalToMove[2][1]=goal[1];
-    goalToMove[2][2]=goal[2];
 
-    goal = splitByDelimiter<double>(goal4_string, ';');
-    ROS_INFO("From logic layer I get 2d_goal4: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
-    goalToMove[3][0]=goal[0];
-    goalToMove[3][1]=goal[1];
-    goalToMove[3][2]=goal[2];
-
-    goal = splitByDelimiter<double>(goal5_string, ';');
-    ROS_INFO("From logic layer I get 2d_goal5: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
-    goalToMove[4][0]=goal[0];
-    goalToMove[4][1]=goal[1];
-    goalToMove[4][2]=goal[2];
-
-    goal = splitByDelimiter<double>(goal6_string, ';');
-    ROS_INFO("From logic layer I get 2d_goal6: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
-    goalToMove[5][0]=goal[0];
-    goalToMove[5][1]=goal[1];
-    goalToMove[5][2]=goal[2];
-
-    goal = splitByDelimiter<double>(goal7_string, ';');
-    ROS_INFO("From logic layer I get 2d_goal7: x=%f, y=%f, theta=%f",goal[0], goal[1], goal[2]);
-    goalToMove[6][0]=goal[0];
-    goalToMove[6][1]=goal[1];
-    goalToMove[6][2]=goal[2];
-
-    /*
     malish::Lift lift_msg;
     lift_msg.dio1 = True;
     lift_msg.dio2 = False;
@@ -143,23 +103,8 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
 
                     while (sec_to_wait) {
                         ROS_INFO("Wait %d seconds", sec_to_wait);
-                 /*       if (_gogogo)
-                            sec_to_wait = 0;
-                        else {
-                            ros::Duration(1).sleep();
-                            sec_to_wait--;
-                        }
-                        */
-                    }
-                    /*
-                    malish::Lift lift_msg;
-                    lift_msg.dio1 = False;
-                    lift_msg.dio2 = True;
-                    lift_msg.dio3 = True;
-                    pub_lift.publish(lift_msg);
-                     */
 
-                    ros::Duration(3).sleep();
+                    }
                 }
             }
             else {
@@ -180,13 +125,41 @@ void GoalSender::parseTransforms(const std::map<std::string, std::string> &keyTo
 void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &params)
 {
     auto data = params.key_value;
-    std::map<std::string, std::string> keyToValue;
+
+    typedef std::map<std::string, std::string> map_SS_T;
+    map_SS_T keyToValue;
+
     for (const auto &a : data) {
         keyToValue[a.key] = a.value;
     }
-    num_goal = std::stod(keyToValue[NUM_GOAL]);
-    ROS_INFO("The number of goal = %d", num_goal);
-    parseTransforms(keyToValue);
+
+    map_SS_T::iterator  it= keyToValue.find("WP");
+    if( it != keyToValue.end() ) {
+        ROS_INFO("Received a 2d_goal %s", it->second.c_str());
+        //parseTransforms(keyToValue);
+    }
+
+    using interface::ProcessInterface;
+    ProcessInterface::Result alibResultOk, alibResultFail;
+    ProcessInterface::Feedback feedback;
+    core_msgs::DataPL dataPL;
+    dataPL.command = "execute";
+    dataPL.id = rosLinkClientPtr->getId();
+    dataPL.type = "feedback";
+    core_msgs::KeyValue keyValue;
+    keyValue.key = "result";
+    keyValue.value = "OK";
+    ROS_INFO("Status: %s", keyValue.value.c_str());
+
+    dataPL.states.push_back(keyValue);
+
+    feedback.feedback.push_back(std::move(dataPL));
+    rosLinkClientPtr->publishFeedback(std::move(feedback));
+
+    rosLinkClientPtr->setSucceeded(alibResultOk,"OK");
+    ROS_INFO("Send suxx ");
+
+    // num_goal = std::stod(keyToValue[NUM_GOAL]);
 }
 
 void GoalSender::preemtCallback() {}

@@ -15,22 +15,9 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 class GoalSender {
   //  ros::Publisher pub_lift;
 
-    const std::string NUM_GOAL = "num_goal";
-    const std::string GOAL1 = "2d_goal1";
-    const std::string GOAL2 = "2d_goal2";
-    const std::string GOAL3 = "2d_goal3";
-    const std::string GOAL4 = "2d_goal4";
-    const std::string GOAL5 = "2d_goal5";
-    const std::string GOAL6 = "2d_goal6";
-    const std::string GOAL7 = "2d_goal7";
-
     int num_goal;
 
-    std::shared_ptr<interface::ProcessInterface> rosLinkClientPtr = nullptr;
-
-    void goalCallback(const interface::ProcessInterface::Parameters &params);
-
-    void preemtCallback();
+    interface::ProcessInterface *rosLinkClientPtr = nullptr;
 
     void parseTransforms(const std::map<std::string, std::string> &keyToValue);
 
@@ -38,6 +25,15 @@ class GoalSender {
 
 
 public:
+
+    void goalCallback(const interface::ProcessInterface::Parameters &params);
+
+    void preemtCallback();
+
+    void SetUpProcessInterface(interface::ProcessInterface* const process){
+        rosLinkClientPtr = process;
+    }
+
     /**
      * Class constructor
      */

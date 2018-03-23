@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         dataPL.id = process.getId();
         dataPL.type = "feedback";
         core_msgs::KeyValue keyValue;
-        keyValue.key = "find";
+        keyValue.key = "setmod";
         keyValue.value = "OK";
         ROS_INFO("Status: %s", keyValue.value.c_str());
 
