@@ -13,7 +13,7 @@ bool FileCoordinates::GetFileContent(std::string &s_file, std::stringstream &s_s
     t_file.open(s_file);
     if(!t_file) 
     {
-	std::cout << "File " << s_file.c_str() << " is not exists " << std::endl;
+        std::cout << "File " << s_file.c_str() << " is not exists " << std::endl;
        return false;
     }
     s_stream_buffer << t_file.rdbuf();
