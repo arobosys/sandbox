@@ -6,7 +6,7 @@
 * N - decimal number of single coordinate
 */
 
-#include <ros/ros.h>
+//#include <ros/ros.h>
 #include <iostream>
 #include <sstream>
 #include <string>
