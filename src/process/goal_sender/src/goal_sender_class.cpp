@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include "GoalSender.hpp"
 #include <math.h>
+#include <string>
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
     /*
@@ -147,8 +148,9 @@ void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &par
     dataPL.id = rosLinkClientPtr->getId();
     dataPL.type = "feedback";
     core_msgs::KeyValue keyValue;
-    keyValue.key = "result";
-    keyValue.value = "OK";
+    keyValue.key = "reach";
+    keyValue.value = "#" + it->second;
+
     ROS_INFO("Status: %s", keyValue.value.c_str());
 
     dataPL.states.push_back(keyValue);
@@ -157,7 +159,7 @@ void GoalSender::goalCallback(const interface::ProcessInterface::Parameters &par
     rosLinkClientPtr->publishFeedback(std::move(feedback));
 
     rosLinkClientPtr->setSucceeded(alibResultOk,"OK");
-    ROS_INFO("Send suxx ");
+    ROS_INFO("Sended ResultOk");
 
     // num_goal = std::stod(keyToValue[NUM_GOAL]);
 }
