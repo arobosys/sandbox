@@ -5,6 +5,13 @@
 #include <string>
 #include "file_coordinates.h"
 
+/**
+\file
+\brief Header File
+Class receiving Goal from Process Layer, read coordinates from file and sand goal to move_base
+* N - decimal number of single coordinate
+*/
+
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
     /*
     rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
