@@ -19,7 +19,7 @@ class GoalSender {
 
     interface::ProcessInterface *rosLinkClientPtr = nullptr;
 
-    void parseTransforms(const std::map<std::string, std::string> &keyToValue);
+    std::map<std::string, std::string> parseTransforms(const std::map<std::string, std::string> &keyToValue);
 
     // void cmdCallback(const malish::JoyCMD &message);
 
