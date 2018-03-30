@@ -56,9 +56,9 @@ std::map<std::string, std::string> GoalSender::parseTransforms(const std::map<st
     MoveBaseClient ac("move_base", true);
 
     //wait for the action server to come up
-    //while(!ac.waitForServer(ros::Duration(10.0))){
-       // ROS_INFO("Waiting for the move_base action server to come up");
-    //}
+    while(!ac.waitForServer(ros::Duration(10.0))){
+        ROS_INFO("Waiting for the move_base action server to come up");
+    }
     for(auto wp = keyToValue.begin(); wp != keyToValue.end(); ++wp) {
         if (wp->first == "WP")
             for(auto it = vec_points_from_file.begin(); it != vec_points_from_file.end(); ++it)
@@ -83,7 +83,7 @@ std::map<std::string, std::string> GoalSender::parseTransforms(const std::map<st
                     goal.target_pose.pose.orientation = qMsg;
 
                     int retry = 0;
-                /*    do {
+                    do {
                         if (retry)
                             ROS_INFO("Retry #%d sending a goal %d to move_base", retry, curr_goal + 1);
                         ROS_INFO("Sending goal %d to move_base", curr_goal + 1);
@@ -108,7 +108,7 @@ std::map<std::string, std::string> GoalSender::parseTransforms(const std::map<st
                             retry++;
                             ros::Duration(5).sleep();
                         }
-                    } while ((ac.getState() != actionlib::SimpleClientGoalState::SUCCEEDED));// || _gogogo */
+                    } while ((ac.getState() != actionlib::SimpleClientGoalState::SUCCEEDED));// || _gogogo
                 }//goal received
     }//for num_of_goal
     if(curr_goal > 0)
