@@ -19,3 +19,7 @@ logs
 .idea
 .project
 .cproject
+.metadata
+.settings
+*tmp/*
+*.orig
