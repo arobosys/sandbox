@@ -12,8 +12,17 @@ catkin_package(
         LIBRARIES ${PROJECT_NAME}
 )
 
-include_directories(include)
-add_library(${PROJECT_NAME} STATIC
+include_directories(${catkin_INCLUDE_DIRS} include)
+
+add_library(${PROJECT_NAME} SHARED
         src/process.cpp
         )
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

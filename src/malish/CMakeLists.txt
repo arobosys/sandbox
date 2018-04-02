@@ -33,7 +33,7 @@ generate_messages(
   std_msgs
 )
 catkin_package(
-  CATKIN_DEPENDS message_runtime xmlrpcpp
+  	CATKIN_DEPENDS message_runtime xmlrpcpp
 )
 include_directories(
   ${catkin_INCLUDE_DIRS}
@@ -59,7 +59,6 @@ add_dependencies(imu_transform malish_generate_messages_cpp)
 add_executable(sonar_transform src/sonar_transform.cpp)
 target_link_libraries(sonar_transform ${catkin_LIBRARIES})
 add_dependencies(sonar_transform malish_generate_messages_cpp)
-
 
 add_executable(safety src/safety.cpp)
 target_link_libraries(safety ${catkin_LIBRARIES} ${OpenCV_LIBS})

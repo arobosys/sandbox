@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>goal_sender</name>
+  <name>lift_process</name>
   <version>0.0.0</version>
-  <description>The goal_sender package</description>
+  <description>The lift_process package</description>
 
-  <maintainer email="zhuhua@todo.todo">zhuhua</maintainer>
+  <maintainer email="shtanov.el@arobosys.com">evgeny</maintainer>
 
 
   <license>TODO</license>
