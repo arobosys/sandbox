@@ -1,5 +1,3 @@
-#include <map>
-#include <unordered_map>
 #include "lift_process.hpp"
 #include <string>
 #include <math.h>
@@ -15,12 +13,6 @@ LiftProcess::LiftProcess(ros::NodeHandle &handle, int argc, char **argv) {
 
     rosLinkClientPtr_->listen();
 }
-
-/*void
-LiftProcess::SetUpProcessInterface(interface::ProcessInterface* const process) {
-    rosLinkClientPtr_ = process;
-    // rosLinkClientPtr_ = std::make_shared<interface::ProcessInterface>(process);
-} */
 
 void
 LiftProcess::liftCallback(const interface::ProcessInterface::Parameters &params)
@@ -42,15 +34,23 @@ LiftProcess::liftCallback(const interface::ProcessInterface::Parameters &params)
         keyToValue[a.key] = a.value;
     }
 
+    bool state_changed = false;
+
     if(keyToValue.find("lift_up") != keyToValue.end()) {
+        // Reset lifts.
+        lift_msg_.dio1 = false;
+        lift_msg_.dio2 = false;
+        lift_pub_.publish(lift_msg_);
         // Lift up.
         lift_msg_.dio1 = true;
         lift_msg_.dio2 = false;
         lift_pub_.publish(lift_msg_);
 
-        keyValue.key = "lifted";
-        keyValue.value = "OK";
+        keyValue.key = "up";
+        keyValue.value = "1";
         dataPL.states.push_back(keyValue);
+
+        state_changed = true;
     }
 
     if(keyToValue.find("lift_down") != keyToValue.end()) {
@@ -60,20 +60,24 @@ LiftProcess::liftCallback(const interface::ProcessInterface::Parameters &params)
         lift_pub_.publish(lift_msg_);
 
         // Lift down.
-        lift_msg_.dio1 = true;
-        lift_msg_.dio2 = false;
+        lift_msg_.dio1 = false;
+        lift_msg_.dio2 = true;
         lift_pub_.publish(lift_msg_);
 
-        keyValue.key = "delifted";
-        keyValue.value = "OK";
+        keyValue.key = "down";
+        keyValue.value = "1";
         dataPL.states.push_back(keyValue);
+
+        state_changed = true;
     }
 
-    feedback.feedback.push_back(std::move(dataPL));
-    rosLinkClientPtr_->publishFeedback(std::move(feedback));
+    if(state_changed) {
+        feedback.feedback.push_back(std::move(dataPL));
+        rosLinkClientPtr_->publishFeedback(std::move(feedback));
 
-    rosLinkClientPtr_->setSucceeded(alibResultOk, "OK");
-    ROS_INFO("Sended lift ResultOk");
+        rosLinkClientPtr_->setSucceeded(alibResultOk, "OK");
+        ROS_INFO("Sended lift down ResultOk");
+    }
 }
 
 void
