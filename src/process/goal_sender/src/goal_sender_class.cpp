@@ -13,29 +13,9 @@ Class receiving Goal from Process Layer, read coordinates from file and sand goa
 */
 
 GoalSender::GoalSender(ros::NodeHandle &handle, int argc, char **argv) {
-    /*
-    rosLinkClientPtr = std::make_shared<interface::ProcessInterface>(argc, argv,
-                       std::bind(&GoalSender::goalCallback, this,std::placeholders::_1),
-                       std::bind(&GoalSender::preemtCallback,this));
 
-    rosLinkClientPtr->listen();
-    */
 }
-/*
-template<typename T>
-std::vector<T> splitByDelimiter(const std::string &s, char delim);
 
-template<>
-std::vector<double> splitByDelimiter(const std::string &s, char delim) {
-    std::stringstream ss(s);
-    std::string item;
-    std::vector<double> result;
-    while (std::getline(ss, item, delim)) {
-        result.push_back(std::stod(item));
-    }
-    return result;
-}
-*/
 std::map<std::string, std::string> GoalSender::parseTransforms(const std::map<std::string, std::string> &keyToValue) {
 
     std::map<std::string, std::string> result;
@@ -85,28 +65,18 @@ std::map<std::string, std::string> GoalSender::parseTransforms(const std::map<st
                     int retry = 0;
                     do {
                         if (retry)
-                            ROS_INFO("Retry #%d sending a goal %d to move_base", retry, curr_goal + 1);
+                            ROS_INFO("Retry #%d sending a goal %d to move_base", retry, curr_goal );
                         ROS_INFO("Sending goal %d to move_base", curr_goal + 1);
                         ac.sendGoal(goal);
 
                         ac.waitForResult();
 
                         if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
-                            ROS_INFO("Malish, the robot moved to goal %d", curr_goal + 1);
-                            if (curr_goal == 3) {
-                                ROS_INFO("I am unloading");
-
-                                int sec_to_wait = 15; // wait
-
-                                while (sec_to_wait) {
-                                    ROS_INFO("Wait %d seconds", sec_to_wait);
-
-                                }
-                            }
+                            ROS_INFO("Malish, the robot moved to goal %d", curr_goal);
                         } else {
-                            ROS_INFO("The robot failed to move to goal %d for some reason", curr_goal + 1);
+                            ROS_INFO("The robot failed to move to goal %d for some reason", curr_goal );
                             retry++;
-                            ros::Duration(5).sleep();
+                            ros::Duration(1).sleep();
                         }
                     } while ((ac.getState() != actionlib::SimpleClientGoalState::SUCCEEDED));// || _gogogo
                 }//goal received
