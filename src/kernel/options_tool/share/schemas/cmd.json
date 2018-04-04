@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "object",
+      "oneOf": [
+
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "set"
+            },
+
+            "args": {
+              "type": "object",
+              "properties": {
+                "vars": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "var": {
+                        "type": "string"
+                      },
+                      "val": {
+                        "type": ["integer", "number", "string", "boolean", "array"]
+                      }
+                    },
+                    "required": [
+                      "var",
+                      "val"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "vars"
+              ]
+            }
+
+          },
+          "required": [
+            "name",
+            "args"
+          ]
+        },
+
+
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "signal"
+            },
+            "args": {
+              "type": "object",
+              "properties": {
+                "sigcode": {
+                  "type": "string",
+                  "pattern": "terminate|kill|stop|continue"
+                }
+              },
+              "required": [ "sigcode" ]
+            }
+          },
+          "required": [
+            "name",
+            "args"
+          ]
+        },
+
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "run"
+            },
+            "args": {
+              "type": "object",
+              "properties" : {
+                "feedback": {
+                  "type": "object",
+                  "properties": {
+                    "published_vars_names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "period": {
+                      "type": "object",
+                      "properties": {
+                        "min": {
+                          "type": "object",
+                          "properties": {
+                            "numeric": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "units" : {
+                              "type": "string",
+                              "pattern": "year|month|day|hour|second|msecond|usecond|nsecond"
+                            }                    
+                          },
+                          "required": [
+                            "numeric",
+                            "units"
+                          ]
+                        },
+                        "max": {
+                          "type": "object",
+                          "properties": {
+                            "numeric": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "units" : {
+                              "type": "string",
+                              "pattern": "year|month|day|hour|second|msecond|usecond|nsecond"
+                            }                    
+                          },
+                          "required": [
+                            "numeric",
+                            "units"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "min",
+                        "max"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "published_vars_names",
+                    "period"
+                  ]
+                }
+              },
+              "required": [ "feedback" ]
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      ]
+    }
+  }
+}
+

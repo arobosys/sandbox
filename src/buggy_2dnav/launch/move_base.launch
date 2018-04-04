@@ -18,8 +18,8 @@
     <param name="clearing_rotation_allowed" value="false" /> <!-- Our carlike robot is not able to rotate in place -->
   </node>
 
-  <!-- -Send four goals- -->
-  <param name="num_goal" value="4" />   
+  <!--x -Send four goals- -->
+  <!--param name="num_goal" value="4" />   
   <param name="goal1_x" value="1.7" />
   <param name="goal1_y" value="0" />
   <param name="goal1_theta" value="90" />
@@ -32,7 +32,7 @@
   <param name="goal4_x" value="0" />
   <param name="goal4_y" value="0" />
   <param name="goal4_theta" value="0" />
-  <node pkg="buggy_2dnav" type="send_goals" name="send_goals" output="screen" />
+  <node pkg="buggy_2dnav" type="send_goals" name="send_goals" output="screen" /-->
   
 </launch>
 

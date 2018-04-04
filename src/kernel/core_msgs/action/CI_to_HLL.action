@@ -1,0 +1,11 @@
+#goal definition
+string command
+string alias
+LL_Params[] params
+---
+#result definition
+string state
+---
+#feedback
+string stateHLL
+string stateLLL

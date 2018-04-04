@@ -1,11 +1,25 @@
 # malish  
-## Репо по минироботу  
-Добавлена тестовая ветвь.
+Malish is a small industrial robot on omniwheels, which can use advanced mapping via RGBD camera.
+It has many options and can work collaboratively with humans.
+Malish is a testing prototype which will further be replaced by Tolstyak.
 
+It consists such parts as:
+*Jetson - Core, Mapping
+*Odroid - Move_Base, Joy_Control
+*Adruino - Motor control, encoders
+*Adruino(Extended) - LED, lifters, buzzer, sonar, IMU
+*Wi-fi router
+*Accumulator
+*Power routing
+*Breadboard Power 1-3
+*Breadboard lifter
+*Breadboard hot power replace
+*Breadboard sonar/imu rooting
+*Breadboard buzzer, LED
 
-### System setup:
+## System setup:
 
-* ROS setup.
+### ROS setup.
 
 ```bash
 sudo apt-get update
@@ -19,7 +33,6 @@ rosdep update
 
 echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-echo "export ROS_IP="hostname -I"" >> ~/.bashrc
 
 
 mkdir -p ~/catkin_ws/src
@@ -29,6 +42,12 @@ catkin_make
 
 sudo apt-get install ros-kinetic-joy ros-kinetic-rosserial ros-kinetic-pcl-ros ros-kinetic-tf2-geometry-msgs ros-kinetic-rtabmap ros-kinetic-rtabmap-ros ros-kinetic-urg-node ros-kinetic-image-view ros-kinetic-robot-localization ros-kinetic-move-base ros-kinetic-teb-local-planner ros-kinetic-global-planner ros-kinetic-teb-local-planner ros-kinetic-range-sensor-layer ros-kinetic-eband-local-planner
 ```
+then you should look which IP does have your pc, using *ifconfig* and add it to .bashrc for ros_ip:
+```bash
+echo "export ROS_IP=You write here your IP!!!" >> ~/.bashrc
+```
+
+After that you can add host machine ip here as well.
 
 * User interface:
 
@@ -65,28 +84,32 @@ Modify /etc/hosts
 
 ### Arduino devices  
 #### IMU connection  
-'V' - 3.3V;  
-'G' - ground;  
-Arduino UNO:  
-'D' - A3;  
-'C' - A4;  
-Arduino MEGA 2560  
-'D' - SDA 20;  
-'C' - SCL 21;  
-Depends upon:  
-TroykaIMU.h https://github.com/amperka/Troyka-IMU  
+'V' - 3.3V; 
+'G' - ground; 
+Arduino UNO: 
+'D' - A3; 
+'C' - A4; 
+Arduino MEGA 2560 
+'D' - SDA 20; 
+'C' - SCL 21; 
+Depends upon: 
+TroykaIMU.h https://github.com/amperka/Troyka-IMU 
 
 #### Sonars connection 
             left, right, front, rear   
-trig pins =   50,    46,    38,   42;  
-echo pins =   48,    44,    36,   40;  
-
+trig pins =   50,    46,    38,   42; 
+echo pins =   48,    44,    36,   40; 
 
 Depends upon:
 Ultrasonic.h https://github.com/JRodrigoTech/Ultrasonic-HC-SR04
 In Ultrasonic.cpp change line21: Time_out=6000;
 
-#### Github:
+#### LED/buzz connection  
+red | green  | blue | buzz
+--- | ------ | ---- | ----
+6   |   5    |  4   | 7
+
+### Github:
 Set up for fast access.
 ```bash
 git clone --recurse-submodules git+ssh://git@github.com/arobosys/malish.git catkin_ws #With submodules (like ZED-wrapper)
@@ -97,8 +120,8 @@ cat ~/.ssh/id_rsa.pub
 git checkout devel
 ```
 
-#### ZSH/Terminator/ssh recommendations
-*Copying the settings from .bashrc-->.zshrc:
+### ZSH/Terminator/ssh recommendations
+* Copying the settings from .bashrc-->.zshrc:
 ```bash
 sudo apt-get install zsh
 echo "source /opt/ros/kinetic/setup.zsh" >> ~/.zshrc
@@ -107,12 +130,113 @@ echo "export ROS_IP="hostname -I"" >> ~/.zshrc
 ```
 Then you check again if this files have identical statements.
 
-*Installing oh-my-zsh:
+* Installing oh-my-zsh:
 ```bash
 sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 ```
-*For ssh use: 
+* For ssh use: 
 ```bash
 ssh -X -C username@address
 ```
 and you will have access to X-server as well. 
+
+#Joystick setup on odroid:
+
+Cancel xmod:
+```bash
+echo "blacklist xpad" | sudo tee -a /etc/modprobe.d/blacklist.conf
+```
+
+Add file "myscript":
+```bash
+#!/bin/bash -e
+sudo xboxdrv -s
+```
+
+Make it executable:
+```bash
+chmod ugo+x /etc/init.d/myscript
+```
+
+Configure the init system to run this script at startup:
+```bash
+sudo update-rc.d myscript defaults
+```
+And reboot.
+
+###Building Arduino libraries
+To build arduino libraries you do:
+```bash
+cd ~/catkin_ws
+catkin_make
+cd ~/Arduino/libraries
+rm -r ros_lib
+rosrun rosserial_arduino make_libraries.py . |grep malish
+```
+Then you can check in the ros_lib folder if everything is right.
+## Start malish system
+To start the malish complicated system you will use at least 3 ubuntu PC's (host machine, jetson and odroid); and 2 arduino via rosserial.
+* Start host machine
+* Do ssh from host machine to odroid and ubuntu
+For this you better have an alias(in Gosha PC just type ubod and 2 terminals will come up)
+Another good improvement could be naming IP's in */etc/hosts* and getting their ssh key's *ssh-copy-id ubuntu@rtx2*
+```bash
+ssh -X -C ubuntu@rtx2 terminator
+```
+Then on ubuntu pc you separate screen by Ctrl+E.
+On first sid you execute
+```
+screen -S core
+roscore
+```
+On the second one
+```
+screen -S map
+roslaunch buggy_2dnav mapping.launch
+```
+
+Then you open the odroid and do same thing with: 
+```
+screen -S joy
+roslaunch malish joy_control.launch
+```
+and for movebase:
+```
+screen -S move
+roslaunch buggy_2dnav move_base.launch
+``` 
+
+After the camera recorded the map you can run:
+```
+rosservice call /rtabmap/localization_mode_on
+``` 
+
+To launch rviz on host PC you should do:
+```bash 
+export ROS_MASTER_URI=http://IP_OF_YOUR_MASTER!!!:11311
+rviz
+``` 
+
+Build on Odroid (variant)
+catkin_make -DCATKIN_BLACKLIST_PACKAGES="buggy_2dnav;kernel;process;command_interpreter;core_msgs;options_tool;process_layer;console_node;logic_layer;process_interface;tiny_process;zed_ros_wrapper"
+
+
+## Change submodules dependency 
+```bash
+$ git submodule deinit -f src/zed-ros-wrapper
+```
+## Write link to wrapper  
+```bash
+$ nano .gitmodules  
+```
+
+# The following:  
+[submodule "src/zed-ros-wrapper"]
+        path = src/zed-ros-wrapper
+        url = https://github.com/arobosys/zed-ros-wrapper
+
+# Then
+```bash
+$ git submodule update --init --recursive
+```
+

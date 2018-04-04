@@ -1,0 +1,130 @@
+<launch>
+    <arg name="rtabmap_args" default="--delete_db_on_start"/>
+    <arg name="mapping_mode" default="true"/>
+
+    <node pkg="nodelet" type="nodelet" name="mapping_nodelet_manager" args="manager" output="screen"/>
+
+    <node pkg="nodelet" type="nodelet" name="sync" args="load buggy_2dnav/SyncOdometryNodelet /mapping_nodelet_manager" />
+
+<group ns="rtabmap">
+    <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen" args="--delete_db_on_start">
+        <param name="subscribe_depth"      type="bool" value="true"/>
+        <param name="subscribe_stereo"     type="bool"   value="false"/>
+        <param name="subscribe_scan"       type="bool"   value="false"/>
+        <param name="subscribe_scan_cloud" type="bool"   value="false"/>
+        <param name="frame_id"             type="string" value="base_link"/>
+        <param name="odom_frame_id"        type="string" value=""/>
+        <param name="wait_for_transform_duration"  type="double"   value="0.2"/>
+        <param name="database_path"        type="string" value="~/.ros/rtabmap.db"/>
+        <param name="approx_sync"          type="bool"   value="false"/>
+        <param name="config_path"          type="string" value=""/>
+        <param name="queue_size"           type="int" value="10"/>
+        <param name="publish_tf"           value="true"/>
+        <param name="wait_for_transform"   value="true"/>
+
+        <param name="Grid/NormalsSegmentation" value="true"/>
+        <param name="Grid/FromDepth" value="true"/>
+        <param name="Grid/DepthMax" value="10.0"/>
+        <param name="Rtabmap/DetectionRate" value="15"/>
+        <param name="SURF/GpuVersion" value="true"/>
+        <param name="Reg/Force3DoF" value="true"/>
+        <param name="Grid/3D" value="false"/>
+        <param name="Grid/MaxObstacleHeight" value="0.20"/>
+        <param name="Grid/MinGroundHeight" value="-3.0"/>
+        <param name="Grid/MaxGroundHeight" value="0.1"/>
+        <param name="Grid/MaxGroundAngle" value="45"/>
+
+        <param name="RGBD/AngularUpdate" type="string" value="0.01"/>
+	<param name="RGBD/LinearUpdate" type="string" value="0.01"/>
+	<param name="Rtabmap/TimeThr" type="string" value="700"/>
+	<param name="Mem/RehearsalSimilarity" type="string" value="0.45"/>
+	<param name="RGBD/OptimizeFromGraphEnd" type="string" value="true"/>
+
+        <remap from="rgb/image"       to="/zed/rgb/image_rect_color"/>
+        <remap from="depth/image"     to="/zed/depth/depth_registered"/>
+        <remap from="rgb/camera_info" to="/zed/rgb/camera_info"/>
+        <remap from="odom"            to="/omni/odom"/>
+        <remap from="scan"            to="/scan/sync"/>
+
+        <param name="Mem/IncrementalMemory" type="string" value="$(arg mapping_mode)"/>
+        <param name="Mem/InitWMWithAllNodes" type="string" value="false"/>
+    </node>
+</group>
+    <node pkg="nodelet" type="nodelet" name="zed" ns="zed" args="load zed_wrapper/ZEDWrapperNodelet /mapping_nodelet_manager">
+        <param name="publish_tf"            value="false" />
+
+        <param name="odometry_frame"        value="odom" />
+        <param name="base_frame"            value="zed_center" />
+        <param name="camera_frame"          value="zed_left_camera" />
+        <param name="depth_frame"           value="zed_depth_camera" />
+
+        <param name="svo_filepath"          value="" />
+
+        <param name="zed_id"                value="0" />
+
+        <param name="resolution"            value="3" />
+        <param name="quality"               value="1" />
+        <param name="sensing_mode"          value="0" />
+        <param name="frame_rate"            value="60" />
+        <param name="odometry_db"           value="" />
+        <param name="openni_depth_mode"     value="0" />
+        <param name="gpu_id"                value="-1" />
+        <param name="confidence"            value="100" />
+        <param name="depth_stabilization"   value="1" />
+
+        <param name="rgb_topic"             value="rgb/image_rect_color" />
+        <param name="rgb_raw_topic"         value="rgb/image_raw_color" />
+        <param name="rgb_cam_info_topic"    value="rgb/camera_info" />
+
+        <param name="left_topic"            value="left/image_rect_color" />
+        <param name="left_raw_topic"        value="left/image_raw_color" />
+        <param name="left_cam_info_topic"   value="left/camera_info" />
+
+        <param name="right_topic"           value="right/image_rect_color" />
+        <param name="right_raw_topic"       value="right/image_raw_color" />
+        <param name="right_cam_info_topic"  value="right/camera_info" />
+
+        <param name="depth_topic"           value="depth/depth_registered" />
+        <param name="depth_cam_info_topic"  value="depth/camera_info" />
+
+        <param name="point_cloud_topic"     value="point_cloud/cloud_registered" />
+
+        <param name="odometry_topic"        value="odom" />
+    </node>
+
+    <param name="zed_description" textfile="$(find zed_wrapper)/urdf/zed.urdf" />
+    <node name="zed_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+        <remap from="robot_description" to="zed_description" />
+    </node>
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" clear_params="true">
+        <param name="frequency" value="60"/>
+        <param name="sensor_timeout" value="0.03"/>
+        <param name="two_d_mode" value="true"/>
+        <param name="publish_tf" value="true"/>
+
+        <param name="odom0" value="/zed/odom"/>
+        <rosparam param="odom0_config">[true, true, true,
+                                        true, true, true,
+                                        false,  false, false,
+                                        false, false, false,
+                                        false, false, false]</rosparam>
+					
+        <param name="odom1" value="/omni/odom"/>
+        <rosparam param="odom1_config">[false, false, false,
+                                        false, false, true,
+                                        true,  true, false,
+                                        false, false, true,
+                                        false, false, false]</rosparam>
+
+    </node>
+
+    <node pkg="tf" type="static_transform_publisher" name="base_link_camera_link" args="0.28 0 0.35 0 0 0 base_link camera_link 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="camera_link_zed_center" args="0 0 0 0 0 0 camera_link zed_center 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_imu" args="0 0 0 0 0 3.14 base_link imu 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_left" args="0 0.15 0.16 1.57 0 0 base_link sonar_left 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_right" args="0 -0.15 0.16 4.71 0 0 base_link sonar_right 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_rear" args="-0.32 0 0.16 3.14 0 0 base_link sonar_rear 20"/>
+    <node pkg="tf" type="static_transform_publisher" name="bl_sonar_front" args="0.32 0 0.16 0 0 0 base_link sonar_front 20"/>
+
+</launch>

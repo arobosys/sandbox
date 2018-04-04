@@ -155,8 +155,8 @@
       <param name="Reg/Force3DoF" value="true"/>
       <param name="Grid/3D" value="false"/>
       <param name="Grid/MaxObstacleHeight" value="0.20"/>
-      <param name="Grid/MinGroundHeight" value="-0.20"/>
-      <param name="Grid/MaxGroundHeight" value="-0.30"/>
+      <param name="Grid/MinGroundHeight" value="-0.10"/>
+      <param name="Grid/MaxGroundHeight" value="-0.45"/>
       <param name="Grid/NormalsSegmentation" value="false"/>
       <param name="Grid/DepthMax" value="0.0"/>
 

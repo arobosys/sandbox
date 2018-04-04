@@ -3,3 +3,17 @@ devel/
 src/.idea
 src/cmake-build-debug*~
 *~
+src/malish/cmake-build-debug/*
+src/malish/.idea*
+src/rosserial*
+*src/.idea/*
+*src/cmake-build-debug/*
+testcases_gen.h
+*.kate-swp
+install
+cmake-build-debug
+.idea
+*.orig
+*.catkin_tools
+*.project
+*.cproject
