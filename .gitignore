@@ -10,3 +10,10 @@ src/rosserial*
 *src/cmake-build-debug/*
 testcases_gen.h
 *.kate-swp
+install
+cmake-build-debug
+.idea
+*.orig
+*.catkin_tools
+*.project
+*.cproject
