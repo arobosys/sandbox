@@ -63,3 +63,8 @@ add_dependencies(sonar_transform malish_generate_messages_cpp)
 add_executable(safety src/safety.cpp)
 target_link_libraries(safety ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(safety malish_generate_messages_cpp)
+
+add_executable(chat src/chatter.cpp)
+target_link_libraries(chat ${catkin_LIBRARIES})
+add_dependencies(chat malish_generate_messages_cpp)
+
