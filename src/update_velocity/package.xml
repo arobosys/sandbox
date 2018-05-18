@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>update_velocity</name>
+  <version>0.0.1</version>
+  <description> update velocity </description>
+  
+  <maintainer email="dvpashmentov@gmail.com">Pashmentov Dmitry</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  
+  <run_depend>roscpp</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+</package>
